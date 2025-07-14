@@ -509,15 +509,15 @@ export const MusicManagement: React.FC = () => {
                       <div>
                         <Label htmlFor={`music-select-${stage.key}`}>Background Music</Label>
                         <Select
-                          value={currentSetting?.music_id || ''}
-                          onValueChange={(value) => handleSettingChange(stage.key, 'music_id', value || null)}
+                          value={currentSetting?.music_id || "none"} // Changed to "none"
+                          onValueChange={(value) => handleSettingChange(stage.key, 'music_id', value === "none" ? null : value)} // Handle "none"
                           disabled={isSaving}
                         >
                           <SelectTrigger id={`music-select-${stage.key}`} className="mt-1">
                             <SelectValue placeholder="Select a music track" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">No Background Music</SelectItem>
+                            <SelectItem value="none">No Background Music</SelectItem> {/* Changed value to "none" */}
                             {musicTracks.filter(t => t.is_active).map((track) => (
                               <SelectItem key={track.id} value={track.id}>
                                 {track.name} ({formatDuration(track.duration)})
