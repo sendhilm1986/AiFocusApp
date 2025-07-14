@@ -17,7 +17,7 @@ import {
   Settings
 } from 'lucide-react';
 
-const ADMIN_EMAIL = 'your_new_admin_email@example.com';
+const ADMIN_EMAIL = 'clarityandpeace@pxdmail.com';
 
 interface DiagnosticResult {
   test: string;
