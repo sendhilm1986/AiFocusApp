@@ -312,7 +312,20 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
 
     const setting = musicSettings.get(stage.key);
     const musicTrack = availableMusicTracks.find(t => t.id === setting?.music_id);
-    let musicUrl = musicTrack?.file_url; // This will be undefined if music_id is null or track not found
+    let musicUrl = musicTrack?.file_url; 
+
+    // Fallback to default music if no specific track is set or active
+    if (!musicUrl || !musicTrack?.is_active) {
+      // Check if the default music is already playing
+      if (musicRef.current.src === `${SUPABASE_URL}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3` && !musicRef.current.paused) {
+        // If default is already playing, just ensure its volume is correct
+        fadeAudio(musicRef.current, musicRef.current.volume, musicVolume, 2); // Fade to default music volume
+        setCurrentMusic(`${SUPABASE_URL}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3`);
+        return;
+      } else {
+        musicUrl = `${SUPABASE_URL}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3`;
+      }
+    }
 
     // Ensure the URL uses the correct Supabase project ID if it's hardcoded from an old one
     if (musicUrl && musicUrl.includes('efysakzuwxexvupndkps')) {
@@ -326,21 +339,6 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     const currentSrc = musicRef.current.src;
     const isCurrentlyPlaying = !musicRef.current.paused;
 
-    // Case 1: No music selected for this stage, or track is inactive
-    if (!musicUrl || !musicTrack?.is_active) {
-        if (isCurrentlyPlaying) {
-            fadeAudio(musicRef.current, musicRef.current.volume, 0, fadeOutDuration, () => {
-                musicRef.current.pause();
-                musicRef.current.src = ""; // Clear source
-                setCurrentMusic(null);
-            });
-        } else {
-            setCurrentMusic(null);
-        }
-        return;
-    }
-
-    // Case 2: Music selected for this stage
     if (currentSrc !== musicUrl) {
         // Different music track or no music was playing
         const startNewMusic = async () => {

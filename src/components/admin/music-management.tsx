@@ -41,7 +41,7 @@ interface BackgroundMusic {
 interface MusicSetting {
   id?: string; // Optional for new settings
   phase: string;
-  stress_level: number; // Default to 1 for now
+  stress_level: number;
   music_id: string | null;
   volume: number;
   fade_in_duration: number;
@@ -59,14 +59,18 @@ export const MusicManagement: React.FC = () => {
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  const [selectedStressLevel, setSelectedStressLevel] = useState<number>(1); // New state for stress level
   const [stageSettings, setStageSettings] = useState<Map<string, MusicSetting>>(new Map());
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [savingSettings, setSavingSettings] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchMusicTracks();
-    fetchMusicSettings();
   }, []);
+
+  useEffect(() => {
+    fetchMusicSettings(selectedStressLevel);
+  }, [selectedStressLevel]); // Refetch settings when stress level changes
 
   const fetchMusicTracks = async () => {
     try {
@@ -86,13 +90,13 @@ export const MusicManagement: React.FC = () => {
     }
   };
 
-  const fetchMusicSettings = async () => {
+  const fetchMusicSettings = async (stressLevel: number) => {
     try {
       setLoadingSettings(true);
       const { data, error } = await supabase
         .from('exercise_music_settings')
         .select('*')
-        .eq('stress_level', 1); // Assuming stress_level 1 for now
+        .eq('stress_level', stressLevel);
 
       if (error) throw error;
 
@@ -101,7 +105,7 @@ export const MusicManagement: React.FC = () => {
         const existingSetting = data?.find(s => s.phase === stage.key);
         settingsMap.set(stage.key, existingSetting || {
           phase: stage.key,
-          stress_level: 1,
+          stress_level: stressLevel, // Use the selected stress level
           music_id: null,
           volume: 0.1,
           fade_in_duration: 2,
@@ -235,7 +239,7 @@ export const MusicManagement: React.FC = () => {
 
       toast.success('Track deleted successfully');
       await fetchMusicTracks();
-      await fetchMusicSettings(); // Refresh settings as a track might have been deleted
+      await fetchMusicSettings(selectedStressLevel); // Refresh settings as a track might have been deleted
     } catch (error: any) {
       console.error('Error deleting track:', error);
       toast.error('Failed to delete track');
@@ -288,7 +292,7 @@ export const MusicManagement: React.FC = () => {
         .upsert({
           id: settingToSave.id, // Will be null for new entries, Supabase handles creation
           phase: settingToSave.phase,
-          stress_level: settingToSave.stress_level,
+          stress_level: selectedStressLevel, // Use the selected stress level
           music_id: settingToSave.music_id,
           volume: settingToSave.volume,
           fade_in_duration: settingToSave.fade_in_duration,
@@ -477,13 +481,32 @@ export const MusicManagement: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Exercise Music Settings (Stress Level 1)
+            Exercise Music Settings
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Configure background music for each phase of the breathing exercise.
+            Configure background music for each phase of the breathing exercise per stress level.
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="stress-level-select">Select Stress Level to Configure</Label>
+            <Select
+              value={String(selectedStressLevel)}
+              onValueChange={(value) => setSelectedStressLevel(Number(value))}
+            >
+              <SelectTrigger id="stress-level-select" className="mt-1 w-[180px]">
+                <SelectValue placeholder="Select stress level" />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4, 5].map(level => (
+                  <SelectItem key={level} value={String(level)}>
+                    Stress Level {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {loadingSettings ? (
             <div className="p-8 text-center">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
