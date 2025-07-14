@@ -231,37 +231,7 @@ export const AdminDashboard: React.FC = () => {
             <RefreshCw className="h-4 w-4" />
             Refresh Data
           </Button>
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="flex items-center gap-2">
-                <Trash2 className="h-4 w-4" />
-                Flush All Data
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                  Flush All User Data
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete ALL user data except for the admin account ({ADMIN_EMAIL}). 
-                  This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={flushAllUserData}
-                  disabled={flushLoading}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  {flushLoading ? 'Flushing...' : 'Yes, Flush All Data'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {/* Removed Flush All Data button */}
         </div>
       </div>
 
