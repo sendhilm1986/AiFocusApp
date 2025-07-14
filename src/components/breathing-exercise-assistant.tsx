@@ -37,7 +37,7 @@ interface BreathingExerciseAssistantProps {
   onComplete?: () => void;
 }
 
-interface ExerciseStage {
+export interface ExerciseStage {
   key: string;
   label: string;
   description: string;
@@ -63,15 +63,15 @@ interface MusicSetting {
 }
 
 // Base stages with stress-level adjusted durations
-const BASE_STAGES = [
-  { key: 'opening_preparation', label: 'Welcome & Preparation', description: 'Getting comfortable and ready to begin' },
-  { key: 'grounding_breathwork', label: 'Grounding Breath', description: 'Simple breathing to center yourself' },
-  { key: 'body_awareness', label: 'Body Scan', description: 'Releasing tension throughout your body' },
-  { key: 'breathing_with_intention', label: 'Deep Breathing', description: 'Focused breathing for relaxation' },
-  { key: 'guided_visualization', label: 'Peaceful Imagery', description: 'Calming mental visualization' },
-  { key: 'deep_stillness', label: 'Quiet Meditation', description: 'Resting in peaceful stillness' },
-  { key: 'affirmations', label: 'Positive Affirmations', description: 'Reinforcing your well-being' },
-  { key: 'closing', label: 'Gentle Return', description: 'Coming back to full awareness' },
+export const BASE_STAGES: ExerciseStage[] = [
+  { key: 'opening_preparation', label: 'Welcome & Preparation', description: 'Getting comfortable and ready to begin', duration: 0 },
+  { key: 'grounding_breathwork', label: 'Grounding Breath', description: 'Simple breathing to center yourself', duration: 0 },
+  { key: 'body_awareness', label: 'Body Scan', description: 'Releasing tension throughout your body', duration: 0 },
+  { key: 'breathing_with_intention', label: 'Deep Breathing', description: 'Focused breathing for relaxation', duration: 0 },
+  { key: 'guided_visualization', label: 'Peaceful Imagery', description: 'Calming mental visualization', duration: 0 },
+  { key: 'deep_stillness', label: 'Quiet Meditation', description: 'Resting in peaceful stillness', duration: 0 },
+  { key: 'affirmations', label: 'Positive Affirmations', description: 'Reinforcing your well-being', duration: 0 },
+  { key: 'closing', label: 'Gentle Return', description: 'Coming back to full awareness', duration: 0 },
 ];
 
 const DEFAULT_BACKGROUND_MUSIC = `${SUPABASE_URL}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3`;
@@ -100,7 +100,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isGeneratingGuidance, setIsGeneratingGuidance] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
-  const [musicSettings, setMusicSettings] = useState<{ [key: string]: MusicSetting }>({});
+  const [musicSettings, setMusicSettings] = useState<Map<string, MusicSetting>>(new Map());
   const [availableMusicTracks, setAvailableMusicTracks] = useState<BackgroundMusic[]>([]);
   const [currentMusic, setCurrentMusic] = useState<string | null>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
@@ -174,12 +174,12 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
             fade_out_duration,
             music:background_music(id, name, file_url, duration, is_active)
           `)
-          .eq('stress_level', 1);
+          .eq('stress_level', stressLevel); // Fetch settings for the current stress level
 
         if (!error && settings) {
-          const settingsMap: { [key: string]: MusicSetting } = {};
+          const settingsMap = new Map<string, MusicSetting>();
           settings.forEach(setting => {
-            settingsMap[setting.phase] = setting;
+            settingsMap.set(setting.phase, setting);
           });
           setMusicSettings(settingsMap);
         } else if (error) {
@@ -244,7 +244,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     return () => {
       cleanup();
     };
-  }, [userId]);
+  }, [userId, stressLevel]); // Add stressLevel to dependencies
 
   const cleanup = () => {
     isStoppingRef.current = true;
@@ -285,14 +285,16 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     const stage = exerciseStages[stageIndex];
     if (!stage) return;
 
-    const setting = musicSettings[stage.key];
-    let musicUrl = setting?.music?.[0]?.file_url || DEFAULT_BACKGROUND_MUSIC;
+    const setting = musicSettings.get(stage.key);
+    const musicTrack = availableMusicTracks.find(t => t.id === setting?.music_id);
+    let musicUrl = musicTrack?.file_url || DEFAULT_BACKGROUND_MUSIC;
 
+    // Ensure the URL uses the correct Supabase project ID if it's hardcoded from an old one
     if (musicUrl && musicUrl.includes('efysakzuwxexvupndkps')) {
         musicUrl = musicUrl.replace('efysakzuwxexvupndkps.supabase.co', 'edmpqigdqdugrvxpqrau.supabase.co');
     }
 
-    if (!musicUrl) {
+    if (!musicUrl || !musicTrack?.is_active) { // Also check if the selected music is active
         if (!musicRef.current.paused) musicRef.current.pause();
         setCurrentMusic(null);
         return;
@@ -305,7 +307,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     try {
         console.log(`Playing music for stage ${stage.label}: ${musicUrl}`);
         musicRef.current.src = musicUrl;
-        musicRef.current.volume = musicVolume;
+        musicRef.current.volume = setting?.volume !== undefined ? setting.volume : musicVolume; // Use specific setting or default
         await musicRef.current.play();
         setCurrentMusic(musicUrl);
     } catch (error) {
