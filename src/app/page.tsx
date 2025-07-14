@@ -117,7 +117,7 @@ export default function HomePage() {
               <p className="text-muted-foreground">
                 Track your progress and celebrate your wellness achievements.
               </p>
-              <Link href="/stress-tracker">
+              <Link href="/stress-tracker?tab=calendar">
                 <Button className="w-full" variant="outline">
                   View Progress
                   <ArrowRight className="h-4 w-4 ml-2" />

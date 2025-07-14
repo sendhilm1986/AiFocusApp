@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // Import useSearchParams
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,6 +44,7 @@ const stressLevels = [
 export default function StressTrackerPage() {
   const { session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams(); // Initialize useSearchParams
   const [selectedStress, setSelectedStress] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,6 +54,9 @@ export default function StressTrackerPage() {
   const [firstName, setFirstName] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Determine initial tab from URL
+  const initialTab = searchParams.get('tab') || 'track';
 
   useEffect(() => {
     if (session?.user) {
@@ -189,7 +193,7 @@ export default function StressTrackerPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="track" className="w-full">
+        <Tabs defaultValue={initialTab} className="w-full"> {/* Use initialTab here */}
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="track">Track Stress</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
