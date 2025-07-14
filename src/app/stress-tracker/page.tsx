@@ -93,22 +93,22 @@ export default function StressTrackerPage() {
 
       if (error) throw error;
 
-      setSuccess(true);
       toast.success('Stress level recorded successfully!');
+      setSuccess(true);
       
-      // Reset form fields
-      setNotes('');
-      setSelectedStress(null); // Reset selectedStress after it's used
-
-      // Refresh entries
-      await fetchStressEntries();
-      
-      // Show breathing exercise for stress levels 3+
+      // Show breathing exercise for stress levels 3+ immediately after successful save
       if (stressScoreForExercise >= 3) {
         setExerciseStressLevel(stressScoreForExercise); // Set the stress level for the exercise
         setShowBreathingExercise(true);
       }
 
+      // Reset form fields
+      setNotes('');
+      setSelectedStress(null); // Reset selectedStress after it's used
+
+      // Refresh entries (can happen after the exercise is shown)
+      await fetchStressEntries();
+      
       setTimeout(() => setSuccess(false), 3000);
     } catch (error: any) {
       setError(error.message);
