@@ -192,14 +192,12 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
           .select(`
             id,
             phase,
-            stress_level,
             music_id,
             volume,
             fade_in_duration,
             fade_out_duration,
             music:background_music(id, name, file_url, duration, is_active)
-          `)
-          .eq('stress_level', stressLevel); // Fetch settings for the current stress level
+          `); // Fetch all settings, no stress_level filter
 
         if (!error && settings) {
           const settingsMap = new Map<string, MusicSetting>();
