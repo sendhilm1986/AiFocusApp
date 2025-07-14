@@ -343,10 +343,10 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     if (currentSrc !== musicUrl) {
         // Different music track or no music was playing
         const startNewMusic = async () => {
-            musicElement.src = musicUrl;
-            musicElement.volume = 0; // Start from 0 for fade-in
-            await musicElement.play();
-            fadeAudio(musicElement, 0, targetVolume, fadeInDuration);
+            musicElement.src = musicUrl; // Corrected: use musicElement
+            musicElement.volume = 0; // Corrected: use musicElement
+            await musicElement.play(); // Corrected: use musicElement
+            fadeAudio(musicElement, 0, targetVolume, fadeInDuration); // Corrected: use musicElement
             setCurrentMusic(musicUrl);
         };
 
