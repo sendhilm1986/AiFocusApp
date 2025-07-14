@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
   Play, 
@@ -58,7 +58,7 @@ interface MusicSetting {
   volume: number;
   fade_in_duration: number;
   fade_out_duration: number;
-  music?: BackgroundMusic; // Nested music object
+  music?: BackgroundMusic[] | null; // Nested music object
   music_id: string | null; // Explicitly include music_id
 }
 
@@ -74,7 +74,7 @@ const BASE_STAGES = [
   { key: 'closing', label: 'Gentle Return', description: 'Coming back to full awareness' },
 ];
 
-const DEFAULT_BACKGROUND_MUSIC = `${supabase.supabaseUrl}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3`;
+const DEFAULT_BACKGROUND_MUSIC = `${SUPABASE_URL}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3`;
 
 // Moved outside component to ensure it's not recreated on every render
 const getExerciseConfig = (stress: number) => {
@@ -286,7 +286,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     if (!stage) return;
 
     const setting = musicSettings[stage.key];
-    let musicUrl = setting?.music?.file_url || DEFAULT_BACKGROUND_MUSIC;
+    let musicUrl = setting?.music?.[0]?.file_url || DEFAULT_BACKGROUND_MUSIC;
 
     if (musicUrl && musicUrl.includes('efysakzuwxexvupndkps')) {
         musicUrl = musicUrl.replace('efysakzuwxexvupndkps.supabase.co', 'edmpqigdqdugrvxpqrau.supabase.co');

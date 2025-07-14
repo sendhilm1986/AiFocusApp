@@ -1,12 +1,12 @@
 // OpenAI Voice Service for Natural TTS and Text Generation via Supabase Edge Functions
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 
 class OpenAIVoiceService {
   private audioCache = new Map<string, string>();
   private supabaseFunctionsUrl: string;
   
   constructor() {
-    this.supabaseFunctionsUrl = `${supabase.supabaseUrl}/functions/v1`;
+    this.supabaseFunctionsUrl = `${SUPABASE_URL}/functions/v1`;
   }
 
   // This method now just returns static voice data
