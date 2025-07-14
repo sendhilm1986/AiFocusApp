@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,7 +24,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { toast } from 'sonner';
 import { StressCalendar } from '@/components/stress-calendar';
-import { BreathingExerciseAssistant } from '@/components/breathing-exercise-assistant';
 import { openaiVoiceService } from '@/lib/openai-voice-service';
 
 interface StressEntry {
@@ -43,11 +43,11 @@ const stressLevels = [
 
 export default function StressTrackerPage() {
   const { session } = useSession();
+  const router = useRouter();
   const [selectedStress, setSelectedStress] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [stressEntries, setStressEntries] = useState<StressEntry[]>([]);
-  const [currentView, setCurrentView] = useState<'tracker' | 'exercise'>('tracker'); // New state for view management
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [firstName, setFirstName] = useState<string | null>(null);
@@ -132,7 +132,12 @@ export default function StressTrackerPage() {
       toast.success('Stress level recorded successfully!');
       setSuccess(true);
       
-      // Generate and play voice message
+      const redirect = () => {
+        if (stressScoreForExercise >= 2) {
+          router.push(`/breathing-exercise?stressLevel=${stressScoreForExercise}`);
+        }
+      };
+
       const selectedLevel = stressLevels.find(l => l.value === stressScoreForExercise);
       const stressLabel = selectedLevel ? selectedLevel.label.toLowerCase() : 'unknown';
       const message = `Looks like you are feeling ${stressLabel} stress today${firstName ? `, ${firstName}` : ''}.`;
@@ -141,24 +146,22 @@ export default function StressTrackerPage() {
         const audioUrl = await openaiVoiceService.generateSpeech(message, 'nova', { speed: 0.9 });
         if (audioRef.current) {
           audioRef.current.src = audioUrl;
-          // Await playback to ensure it starts before potential view change
-          await audioRef.current.play().catch(e => console.error("Audio playback error:", e));
+          audioRef.current.onended = redirect;
+          await audioRef.current.play().catch(e => {
+            console.error("Audio playback error:", e);
+            redirect();
+          });
+        } else {
+          redirect();
         }
       } catch (speechError: any) {
         console.error("Failed to generate or play speech:", speechError);
         toast.error("Failed to play voice message. Please check Admin > Debug > TTS Diagnostics for OpenAI API key status.");
+        redirect();
       }
 
-      // Transition to breathing exercise for stress levels 2+
-      if (stressScoreForExercise >= 2) { // Changed condition to >= 2
-        setCurrentView('exercise'); // Change view to exercise
-      }
-
-      // Reset form fields
       setNotes('');
       setSelectedStress(null);
-
-      // Refresh entries
       await fetchStressEntries();
       
       setTimeout(() => setSuccess(false), 3000);
@@ -176,31 +179,6 @@ export default function StressTrackerPage() {
     return recent.reduce((sum, entry) => sum + entry.stress_score, 0) / recent.length;
   };
 
-  // Render the BreathingExerciseAssistant if currentView is 'exercise'
-  if (currentView === 'exercise' && selectedStress !== null) {
-    return (
-      <div className="p-8 sm:p-12">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">Stress Relief Exercise</h1>
-            <p className="text-muted-foreground">
-              Let's help you manage your stress with a guided breathing exercise
-            </p>
-          </div>
-          
-          <BreathingExerciseAssistant 
-            stressLevel={selectedStress} // Pass the selected stress level
-            onComplete={() => {
-              setCurrentView('tracker'); // Go back to tracker view
-              setSelectedStress(null); // Reset selected stress
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // Otherwise, render the stress tracker form
   return (
     <div className="p-8 sm:p-12">
       <div className="max-w-4xl mx-auto space-y-8">
