@@ -140,13 +140,14 @@ export default function StressTrackerPage() {
 
       try {
         const audioUrl = await openaiVoiceService.generateSpeech(message, 'nova', { speed: 0.9 });
+        console.log('Generated audio URL:', audioUrl); // Debug log
         if (audioRef.current) {
           audioRef.current.src = audioUrl;
           audioRef.current.play().catch(e => console.error("Audio playback error:", e));
         }
       } catch (speechError: any) {
         console.error("Failed to generate or play speech:", speechError);
-        toast.error("Failed to play voice message.");
+        toast.error("Failed to play voice message. Please check Admin > Debug > TTS Diagnostics for OpenAI API key status.");
       }
 
       // Show breathing exercise for stress levels 3+
@@ -159,7 +160,7 @@ export default function StressTrackerPage() {
       setNotes('');
       setSelectedStress(null);
 
-      // Refresh entries
+      // Refresh entries (moved to happen after potential exercise display)
       await fetchStressEntries();
       
       setTimeout(() => setSuccess(false), 3000);
