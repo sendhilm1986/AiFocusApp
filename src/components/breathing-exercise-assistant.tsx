@@ -141,7 +141,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const musicRef = useRef<HTMLAudioElement | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(timerRef);
+  const timerRef = useRef<NodeJS.Timeout | null>(null); // Corrected initialization
   const totalTimeRef = useRef(0);
   const elapsedTimeRef = useRef(0);
   const isStoppingRef = useRef(false);
@@ -343,10 +343,10 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     if (currentSrc !== musicUrl) {
         // Different music track or no music was playing
         const startNewMusic = async () => {
-            musicElement.src = musicUrl; // Corrected: use musicElement
-            musicElement.volume = 0; // Corrected: use musicElement
-            await musicElement.play(); // Corrected: use musicElement
-            fadeAudio(musicElement, 0, targetVolume, fadeInDuration); // Corrected: use musicElement
+            musicElement.src = musicUrl;
+            musicElement.volume = 0; // Start from 0 for fade-in
+            await musicElement.play();
+            fadeAudio(musicElement, 0, targetVolume, fadeInDuration);
             setCurrentMusic(musicUrl);
         };
 
