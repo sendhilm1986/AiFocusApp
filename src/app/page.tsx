@@ -34,7 +34,7 @@ export default function HomePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 Monitor your stress levels throughout the day with our intuitive tracking system.
               </p>
               <Link href="/stress-tracker">
@@ -54,7 +54,7 @@ export default function HomePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 Get personalized insights and recommendations based on your stress patterns.
               </p>
               <Link href="/ai-insights">
@@ -74,7 +74,7 @@ export default function HomePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 AI-guided breathing sessions personalized to your current stress level.
               </p>
               <Link href="/stress-tracker">
@@ -94,11 +94,11 @@ export default function HomePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 Track your progress and celebrate your wellness achievements.
               </p>
               <Link href="/stress-tracker?tab=calendar">
-                <Button className="w-full" variant="outline">
+                <Button className="w-full">
                   View Progress
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
