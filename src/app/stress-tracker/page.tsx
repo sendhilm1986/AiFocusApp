@@ -141,15 +141,16 @@ export default function StressTrackerPage() {
         const audioUrl = await openaiVoiceService.generateSpeech(message, 'nova', { speed: 0.9 });
         if (audioRef.current) {
           audioRef.current.src = audioUrl;
-          audioRef.current.play().catch(e => console.error("Audio playback error:", e));
+          // Await playback to ensure it starts before potential view change
+          await audioRef.current.play().catch(e => console.error("Audio playback error:", e));
         }
       } catch (speechError: any) {
         console.error("Failed to generate or play speech:", speechError);
         toast.error("Failed to play voice message. Please check Admin > Debug > TTS Diagnostics for OpenAI API key status.");
       }
 
-      // Transition to breathing exercise for stress levels 3+
-      if (stressScoreForExercise >= 3) {
+      // Transition to breathing exercise for stress levels 2+
+      if (stressScoreForExercise >= 2) { // Changed condition to >= 2
         setCurrentView('exercise'); // Change view to exercise
       }
 
@@ -291,7 +292,7 @@ export default function StressTrackerPage() {
                   {loading ? 'Saving...' : 'Record Stress Level'}
                 </Button>
 
-                {selectedStress && selectedStress >= 3 && (
+                {selectedStress && selectedStress >= 2 && (
                   <Alert className="border-blue-200 bg-blue-50">
                     <Wind className="h-4 w-4 text-blue-600" />
                     <AlertDescription className="text-blue-800">
