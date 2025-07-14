@@ -17,6 +17,8 @@ import {
   Settings
 } from 'lucide-react';
 
+const ADMIN_EMAIL = 'your_new_admin_email@example.com';
+
 interface DiagnosticResult {
   test: string;
   status: 'success' | 'error' | 'warning';
@@ -43,7 +45,7 @@ export const AdminDiagnostics: React.FC = () => {
           message: 'Not authenticated',
           details: error
         });
-      } else if (user.email !== 'sendhil@clickworthy.in') {
+      } else if (user.email !== ADMIN_EMAIL) {
         diagnostics.push({
           test: 'Admin Authentication',
           status: 'error',

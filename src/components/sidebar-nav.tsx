@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Admin email - only this user should see the admin link
-const ADMIN_EMAIL = 'sendhil@clickworthy.in';
+const ADMIN_EMAIL = 'your_new_admin_email@example.com';
 
 interface NavItem {
   title: string;

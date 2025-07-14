@@ -41,7 +41,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const ADMIN_EMAIL = 'sendhil@clickworthy.in';
+const ADMIN_EMAIL = 'your_new_admin_email@example.com';
 
 interface UserData {
   id: string;

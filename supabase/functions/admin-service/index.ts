@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ADMIN_EMAIL = 'sendhil@clickworthy.in';
+const ADMIN_EMAIL = 'your_new_admin_email@example.com';
 
 serve(async (req: Request) => {
   console.log('=== Admin Service Function Started ===');
