@@ -74,7 +74,32 @@ export const BASE_STAGES: ExerciseStage[] = [
   { key: 'closing', label: 'Gentle Return', description: 'Coming back to full awareness', duration: 0 },
 ];
 
-const DEFAULT_BACKGROUND_MUSIC = `${SUPABASE_URL}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3`;
+// Helper function for fading audio
+const fadeAudio = (audioElement: HTMLAudioElement, startVolume: number, endVolume: number, duration: number, onComplete?: () => void) => {
+  if (!audioElement || duration === 0) {
+    audioElement.volume = endVolume;
+    onComplete?.();
+    return;
+  }
+
+  const steps = 60; // frames per second
+  const intervalTime = duration * 1000 / steps;
+  let currentStep = 0;
+  const volumeDiff = endVolume - startVolume;
+
+  const fadeInterval = setInterval(() => {
+    currentStep++;
+    const newVolume = startVolume + (volumeDiff * (currentStep / steps));
+    audioElement.volume = Math.max(0, Math.min(1, newVolume)); // Clamp volume between 0 and 1
+
+    if (currentStep >= steps) {
+      clearInterval(fadeInterval);
+      audioElement.volume = endVolume; // Ensure final volume is exact
+      onComplete?.();
+    }
+  }, intervalTime);
+};
+
 
 // Moved outside component to ensure it's not recreated on every render
 const getExerciseConfig = (stress: number) => {
@@ -287,32 +312,63 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
 
     const setting = musicSettings.get(stage.key);
     const musicTrack = availableMusicTracks.find(t => t.id === setting?.music_id);
-    let musicUrl = musicTrack?.file_url || DEFAULT_BACKGROUND_MUSIC;
+    let musicUrl = musicTrack?.file_url; // This will be undefined if music_id is null or track not found
 
     // Ensure the URL uses the correct Supabase project ID if it's hardcoded from an old one
     if (musicUrl && musicUrl.includes('efysakzuwxexvupndkps')) {
         musicUrl = musicUrl.replace('efysakzuwxexvupndkps.supabase.co', 'edmpqigdqdugrvxpqrau.supabase.co');
     }
 
-    if (!musicUrl || !musicTrack?.is_active) { // Also check if the selected music is active
-        if (!musicRef.current.paused) musicRef.current.pause();
-        setCurrentMusic(null);
+    const targetVolume = setting?.volume !== undefined ? setting.volume : musicVolume;
+    const fadeInDuration = setting?.fade_in_duration || 2;
+    const fadeOutDuration = setting?.fade_out_duration || 2;
+
+    const currentSrc = musicRef.current.src;
+    const isCurrentlyPlaying = !musicRef.current.paused;
+
+    // Case 1: No music selected for this stage, or track is inactive
+    if (!musicUrl || !musicTrack?.is_active) {
+        if (isCurrentlyPlaying) {
+            fadeAudio(musicRef.current, musicRef.current.volume, 0, fadeOutDuration, () => {
+                musicRef.current.pause();
+                musicRef.current.src = ""; // Clear source
+                setCurrentMusic(null);
+            });
+        } else {
+            setCurrentMusic(null);
+        }
         return;
     }
 
-    if (musicRef.current.src === musicUrl && !musicRef.current.paused) {
-        return;
-    }
+    // Case 2: Music selected for this stage
+    if (currentSrc !== musicUrl) {
+        // Different music track or no music was playing
+        const startNewMusic = async () => {
+            musicRef.current.src = musicUrl;
+            musicRef.current.volume = 0; // Start from 0 for fade-in
+            await musicRef.current.play();
+            fadeAudio(musicRef.current, 0, targetVolume, fadeInDuration);
+            setCurrentMusic(musicUrl);
+        };
 
-    try {
-        console.log(`Playing music for stage ${stage.label}: ${musicUrl}`);
-        musicRef.current.src = musicUrl;
-        musicRef.current.volume = setting?.volume !== undefined ? setting.volume : musicVolume; // Use specific setting or default
-        await musicRef.current.play();
-        setCurrentMusic(musicUrl);
-    } catch (error) {
-        console.warn(`Failed to play music for stage ${stage.label}:`, error);
-        setCurrentMusic(null);
+        if (isCurrentlyPlaying) {
+            // Fade out current music, then start new one
+            fadeAudio(musicRef.current, musicRef.current.volume, 0, fadeOutDuration, startNewMusic);
+        } else {
+            // No music playing, just start new one with fade-in
+            startNewMusic();
+        }
+    } else {
+        // Same music track
+        if (musicRef.current.volume !== targetVolume) {
+            // Adjust volume if needed
+            fadeAudio(musicRef.current, musicRef.current.volume, targetVolume, Math.max(fadeInDuration, fadeOutDuration));
+        }
+        if (!isCurrentlyPlaying) {
+            // Resume if paused
+            await musicRef.current.play();
+        }
+        setCurrentMusic(musicUrl); // Ensure state is updated
     }
   };
 
@@ -351,10 +407,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
   const startExercise = async () => {
     if (exerciseStages.length === 0) return;
     
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    cleanup(); // Ensure any previous timers/audio are stopped
     
     isStoppingRef.current = false;
     setIsFinished(false);
@@ -365,6 +418,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     setAudioError(null);
     setCurrentGuidanceText('Starting your personalized session...');
     
+    // Initial music and guidance for the first stage
     await playMusicForStage(0);
     await generateAndPlayGuidance(0);
     
@@ -381,17 +435,16 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
         stageEndTime += exerciseStages[i]?.duration || 0;
       }
       
-      if (elapsedTimeRef.current >= stageEndTime && currentStageRef.current < exerciseStages.length - 1) {
+      if (remaining <= 0) {
+        completeExercise();
+      } else if (elapsedTimeRef.current >= stageEndTime && currentStageRef.current < exerciseStages.length - 1) {
         const nextIndex = currentStageRef.current + 1;
         currentStageRef.current = nextIndex;
         setCurrentStageIndex(nextIndex);
         
+        // Play music and generate guidance for the new stage
         await playMusicForStage(nextIndex);
         await generateAndPlayGuidance(nextIndex);
-      }
-      
-      if (remaining <= 0) {
-        completeExercise();
       }
     }, 1000);
   };
@@ -400,7 +453,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     setIsPlaying(false);
     if (timerRef.current) clearInterval(timerRef.current);
     if (audioRef.current) audioRef.current.pause();
-    if (musicRef.current) musicRef.current.pause();
+    if (musicRef.current) musicRef.current.pause(); // Ensure music pauses
   };
 
   const resumeExercise = () => {
@@ -413,7 +466,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     
     setIsPlaying(true);
     if (audioRef.current && audioRef.current.src) audioRef.current.play().catch(console.warn);
-    if (musicRef.current && musicRef.current.src) musicRef.current.play().catch(console.warn);
+    if (musicRef.current && musicRef.current.src) musicRef.current.play().catch(console.warn); // Ensure music resumes
     
     timerRef.current = setInterval(() => {
       if (isStoppingRef.current) return;
@@ -438,7 +491,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     setIsGeneratingGuidance(false);
     currentStageRef.current = 0;
     
-    cleanup();
+    cleanup(); // This will stop all audio and clear timers
   };
 
   const completeExercise = async () => {
@@ -446,10 +499,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     setProgress(100);
     setTimeRemaining(0);
     
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    cleanup(); // Stop all timers and audio immediately
     
     setIsCompleting(true);
     const completionText = `${firstName || 'You'}, you've done something wonderful for yourself. Carry this peace with you.`;
@@ -459,6 +509,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
       const audioUrl = await openaiVoiceService.generateSpeech(completionText, selectedVoice, { speed: 0.8 });
       if (audioUrl && audioRef.current && !isStoppingRef.current) {
         audioRef.current.src = audioUrl;
+        audioRef.current.volume = voiceVolume; // Ensure volume is set
         await audioRef.current.play();
       }
     } catch (error) {
@@ -467,11 +518,6 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
       setIsCompleting(false);
       setIsFinished(true);
     }
-    
-    setTimeout(() => {
-      if (musicRef.current) musicRef.current.pause();
-      setCurrentMusic(null);
-    }, 3000);
     
     toast.success("Stress relief exercise completed! You should feel more relaxed now.");
   };
