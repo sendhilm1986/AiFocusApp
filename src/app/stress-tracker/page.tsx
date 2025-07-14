@@ -47,6 +47,7 @@ export default function StressTrackerPage() {
   const [loading, setLoading] = useState(false);
   const [stressEntries, setStressEntries] = useState<StressEntry[]>([]);
   const [showBreathingExercise, setShowBreathingExercise] = useState(false);
+  const [exerciseStressLevel, setExerciseStressLevel] = useState<number | null>(null); // New state to hold stress level for exercise
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -75,6 +76,8 @@ export default function StressTrackerPage() {
   const saveStressEntry = async () => {
     if (!selectedStress) return;
 
+    const stressScoreForExercise = selectedStress; // Capture the value
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -84,7 +87,7 @@ export default function StressTrackerPage() {
         .from('stress_entries')
         .insert({
           user_id: session?.user?.id,
-          stress_score: selectedStress,
+          stress_score: stressScoreForExercise, // Use the captured value
           notes: notes.trim() || null,
         });
 
@@ -93,15 +96,16 @@ export default function StressTrackerPage() {
       setSuccess(true);
       toast.success('Stress level recorded successfully!');
       
-      // Reset form
-      setSelectedStress(null);
+      // Reset form fields
       setNotes('');
-      
+      setSelectedStress(null); // Reset selectedStress after it's used
+
       // Refresh entries
       await fetchStressEntries();
       
       // Show breathing exercise for stress levels 3+
-      if (selectedStress >= 3) {
+      if (stressScoreForExercise >= 3) {
+        setExerciseStressLevel(stressScoreForExercise); // Set the stress level for the exercise
         setShowBreathingExercise(true);
       }
 
@@ -120,7 +124,7 @@ export default function StressTrackerPage() {
     return recent.reduce((sum, entry) => sum + entry.stress_score, 0) / recent.length;
   };
 
-  if (showBreathingExercise && selectedStress) {
+  if (showBreathingExercise && exerciseStressLevel !== null) { // Check the new state
     return (
       <div className="p-8 sm:p-12">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -132,8 +136,11 @@ export default function StressTrackerPage() {
           </div>
           
           <BreathingExerciseAssistant 
-            stressLevel={selectedStress}
-            onComplete={() => setShowBreathingExercise(false)}
+            stressLevel={exerciseStressLevel} // Pass the new state
+            onComplete={() => {
+              setShowBreathingExercise(false);
+              setExerciseStressLevel(null); // Reset after completion
+            }}
           />
         </div>
       </div>
