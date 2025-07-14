@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,6 +24,7 @@ import { useSession } from '@/components/session-context-provider';
 import { toast } from 'sonner';
 import { StressCalendar } from '@/components/stress-calendar';
 import { BreathingExerciseAssistant } from '@/components/breathing-exercise-assistant';
+import { openaiVoiceService } from '@/lib/openai-voice-service';
 
 interface StressEntry {
   id: string;
@@ -47,15 +48,51 @@ export default function StressTrackerPage() {
   const [loading, setLoading] = useState(false);
   const [stressEntries, setStressEntries] = useState<StressEntry[]>([]);
   const [showBreathingExercise, setShowBreathingExercise] = useState(false);
-  const [exerciseStressLevel, setExerciseStressLevel] = useState<number | null>(null); // New state to hold stress level for exercise
+  const [exerciseStressLevel, setExerciseStressLevel] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [firstName, setFirstName] = useState<string | null>(null);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (session?.user) {
       fetchStressEntries();
+      fetchUserProfile();
     }
   }, [session]);
+
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+    };
+  }, []);
+
+  const fetchUserProfile = async () => {
+    if (session?.user) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('first_name')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user profile:', error);
+        } else if (data?.first_name) {
+          setFirstName(data.first_name);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    }
+  };
 
   const fetchStressEntries = async () => {
     try {
@@ -76,7 +113,7 @@ export default function StressTrackerPage() {
   const saveStressEntry = async () => {
     if (!selectedStress) return;
 
-    const stressScoreForExercise = selectedStress; // Capture the value
+    const stressScoreForExercise = selectedStress;
 
     setLoading(true);
     setError(null);
@@ -87,7 +124,7 @@ export default function StressTrackerPage() {
         .from('stress_entries')
         .insert({
           user_id: session?.user?.id,
-          stress_score: stressScoreForExercise, // Use the captured value
+          stress_score: stressScoreForExercise,
           notes: notes.trim() || null,
         });
 
@@ -96,17 +133,33 @@ export default function StressTrackerPage() {
       toast.success('Stress level recorded successfully!');
       setSuccess(true);
       
-      // Show breathing exercise for stress levels 3+ immediately after successful save
+      // Generate and play voice message
+      const selectedLevel = stressLevels.find(l => l.value === stressScoreForExercise);
+      const stressLabel = selectedLevel ? selectedLevel.label.toLowerCase() : 'unknown';
+      const message = `Looks like you are feeling ${stressLabel} stress today${firstName ? `, ${firstName}` : ''}.`;
+
+      try {
+        const audioUrl = await openaiVoiceService.generateSpeech(message, 'nova', { speed: 0.9 });
+        if (audioRef.current) {
+          audioRef.current.src = audioUrl;
+          audioRef.current.play().catch(e => console.error("Audio playback error:", e));
+        }
+      } catch (speechError: any) {
+        console.error("Failed to generate or play speech:", speechError);
+        toast.error("Failed to play voice message.");
+      }
+
+      // Show breathing exercise for stress levels 3+
       if (stressScoreForExercise >= 3) {
-        setExerciseStressLevel(stressScoreForExercise); // Set the stress level for the exercise
+        setExerciseStressLevel(stressScoreForExercise);
         setShowBreathingExercise(true);
       }
 
       // Reset form fields
       setNotes('');
-      setSelectedStress(null); // Reset selectedStress after it's used
+      setSelectedStress(null);
 
-      // Refresh entries (can happen after the exercise is shown)
+      // Refresh entries
       await fetchStressEntries();
       
       setTimeout(() => setSuccess(false), 3000);
@@ -120,11 +173,11 @@ export default function StressTrackerPage() {
 
   const getRecentAverage = () => {
     if (stressEntries.length === 0) return 0;
-    const recent = stressEntries.slice(0, 7); // Last 7 entries
+    const recent = stressEntries.slice(0, 7);
     return recent.reduce((sum, entry) => sum + entry.stress_score, 0) / recent.length;
   };
 
-  if (showBreathingExercise && exerciseStressLevel !== null) { // Check the new state
+  if (showBreathingExercise && exerciseStressLevel !== null) {
     return (
       <div className="p-8 sm:p-12">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -136,10 +189,10 @@ export default function StressTrackerPage() {
           </div>
           
           <BreathingExerciseAssistant 
-            stressLevel={exerciseStressLevel} // Pass the new state
+            stressLevel={exerciseStressLevel}
             onComplete={() => {
               setShowBreathingExercise(false);
-              setExerciseStressLevel(null); // Reset after completion
+              setExerciseStressLevel(null);
             }}
           />
         </div>
@@ -338,6 +391,8 @@ export default function StressTrackerPage() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <audio ref={audioRef} className="hidden" />
     </div>
   );
 }
