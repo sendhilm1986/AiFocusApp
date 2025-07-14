@@ -47,8 +47,7 @@ export default function StressTrackerPage() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [stressEntries, setStressEntries] = useState<StressEntry[]>([]);
-  const [showBreathingExercise, setShowBreathingExercise] = useState(false);
-  const [exerciseStressLevel, setExerciseStressLevel] = useState<number | null>(null);
+  const [currentView, setCurrentView] = useState<'tracker' | 'exercise'>('tracker'); // New state for view management
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [firstName, setFirstName] = useState<string | null>(null);
@@ -140,7 +139,6 @@ export default function StressTrackerPage() {
 
       try {
         const audioUrl = await openaiVoiceService.generateSpeech(message, 'nova', { speed: 0.9 });
-        console.log('Generated audio URL:', audioUrl); // Debug log
         if (audioRef.current) {
           audioRef.current.src = audioUrl;
           audioRef.current.play().catch(e => console.error("Audio playback error:", e));
@@ -150,17 +148,16 @@ export default function StressTrackerPage() {
         toast.error("Failed to play voice message. Please check Admin > Debug > TTS Diagnostics for OpenAI API key status.");
       }
 
-      // Show breathing exercise for stress levels 3+
+      // Transition to breathing exercise for stress levels 3+
       if (stressScoreForExercise >= 3) {
-        setExerciseStressLevel(stressScoreForExercise);
-        setShowBreathingExercise(true);
+        setCurrentView('exercise'); // Change view to exercise
       }
 
       // Reset form fields
       setNotes('');
       setSelectedStress(null);
 
-      // Refresh entries (moved to happen after potential exercise display)
+      // Refresh entries
       await fetchStressEntries();
       
       setTimeout(() => setSuccess(false), 3000);
@@ -178,7 +175,8 @@ export default function StressTrackerPage() {
     return recent.reduce((sum, entry) => sum + entry.stress_score, 0) / recent.length;
   };
 
-  if (showBreathingExercise && exerciseStressLevel !== null) {
+  // Render the BreathingExerciseAssistant if currentView is 'exercise'
+  if (currentView === 'exercise' && selectedStress !== null) {
     return (
       <div className="p-8 sm:p-12">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -190,10 +188,10 @@ export default function StressTrackerPage() {
           </div>
           
           <BreathingExerciseAssistant 
-            stressLevel={exerciseStressLevel}
+            stressLevel={selectedStress} // Pass the selected stress level
             onComplete={() => {
-              setShowBreathingExercise(false);
-              setExerciseStressLevel(null);
+              setCurrentView('tracker'); // Go back to tracker view
+              setSelectedStress(null); // Reset selected stress
             }}
           />
         </div>
@@ -201,6 +199,7 @@ export default function StressTrackerPage() {
     );
   }
 
+  // Otherwise, render the stress tracker form
   return (
     <div className="p-8 sm:p-12">
       <div className="max-w-4xl mx-auto space-y-8">
