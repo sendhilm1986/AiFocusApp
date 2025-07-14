@@ -39,14 +39,14 @@ const navItems: NavItem[] = [
     icon: Smile,
   },
   {
-    title: "AI Insights",
-    href: "/ai-insights",
-    icon: Brain,
-  },
-  {
     title: "Breathing Exercise",
     href: "/breathing-exercise",
     icon: Wind,
+  },
+  {
+    title: "AI Insights",
+    href: "/ai-insights",
+    icon: Brain,
   },
   {
     title: "Admin",
