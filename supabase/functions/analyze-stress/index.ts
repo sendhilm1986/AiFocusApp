@@ -112,7 +112,7 @@ Keep the response conversational, supportive, and under 300 words. Focus on prac
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo',
         messages: [
           {
             role: 'system',
@@ -123,7 +123,7 @@ Keep the response conversational, supportive, and under 300 words. Focus on prac
             content: prompt
           }
         ],
-        max_tokens: 400,
+        max_tokens: 300,
         temperature: 0.7,
       }),
     });

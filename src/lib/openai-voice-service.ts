@@ -130,13 +130,43 @@ class OpenAIVoiceService {
   }
 
   async generateGuidanceText(stressLevel: number, phase: string, userName: string | null, currentStep: number): Promise<string> {
-    console.log('=== CLIENT: Using fallback guidance text ===');
-    
-    // Fallback guidance text for each phase
-    const guidanceTexts: { [key: string]: string } = {
-      'opening_preparation': `${userName ? `${userName}, ` : ''}welcome to your stress relief session. Find a comfortable position and allow yourself to settle in. Take a moment to notice how you're feeling right now, and know that you're taking a positive step for your well-being.`,
-      'grounding_breathwork': `${userName ? `${userName}, ` : ''}let's begin with some gentle breathing. Breathe in slowly through your nose for four counts... hold for two... and exhale gently through your mouth for six counts. Feel yourself becoming more centered with each breath.`,
-      'body_awareness': `${userName ? `${userName}, ` : ''}now let's scan through your body. Starting from the top of your head, notice any areas of tension. Allow your shoulders to drop, soften your jaw, and let any tightness melt away as you continue breathing deeply.`,
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('Authentication error: Could not get user session.');
+      }
+
+      const functionUrl = `${this.supabaseFunctionsUrl}/generate-breathing-guidance`;
+
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          stressLevel,
+          phase,
+          userName,
+          currentStep
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response from server.' }));
+        throw new Error(errorData.error || `Server error: ${response.status} ${response.statusText}`);
+      }
+
+      const { guidanceText } = await response.json();
+      return guidanceText;
+
+    } catch (error: any) {
+      console.error('=== CLIENT: Guidance text generation failed, using fallback ===', error);
+      // Fallback logic
+      const guidanceTexts: { [key: string]: string } = {
+        'opening_preparation': `${userName ? `${userName}, ` : ''}welcome to your stress relief session. Find a comfortable position and allow yourself to settle in. Take a moment to notice how you're feeling right now, and know that you're taking a positive step for your well-being.`,
+        'grounding_breathwork': `${userName ? `${userName}, ` : ''}let's begin with some gentle breathing. Breathe in slowly through your nose for four counts... hold for two... and exhale gently through your mouth for six counts. Feel yourself becoming more centered with each breath.`,
+        'body_awareness': `${userName ? `${userName}, ` : ''}now let's scan through your body. Starting from the top of your head, notice any areas of tension. Allow your shoulders to drop, soften your jaw, and let any tightness melt away as you continue breathing deeply.`,
         'breathing_with_intention': `${userName ? `${userName}, ` : ''}focus on your breath as your anchor. With each inhale, imagine drawing in calm and peace. With each exhale, release any stress or tension you've been carrying. Your breath is your pathway to tranquility.`,
         'guided_visualization': `${userName ? `${userName}, ` : ''}imagine yourself in a peaceful place. Perhaps a quiet beach, a serene forest, or a cozy room filled with soft light. Feel the safety and calm of this space. You are exactly where you need to be.`,
         'deep_stillness': `${userName ? `${userName}, ` : ''}rest in this moment of stillness. There's nothing you need to do, nowhere you need to be. Simply allow yourself to be present, breathing naturally, feeling the peace that comes from within.`,
@@ -146,8 +176,8 @@ class OpenAIVoiceService {
       
       const fallbackText = guidanceTexts[phase] || `${userName ? `${userName}, ` : ''}take a moment to breathe deeply and find your center. You are safe, you are calm, and you are exactly where you need to be.`;
       
-      console.log('Using fallback guidance text for phase:', phase);
       return fallbackText;
+    }
   }
 
   clearCache() {
