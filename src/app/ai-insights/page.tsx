@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
 
 interface StressEntry {
   id: string;
@@ -254,7 +255,7 @@ export default function AIInsightsPage() {
                           <h4 className="font-medium">AI Insights & Recommendations</h4>
                         </div>
                         <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                          {analysis}
+                          <ReactMarkdown>{analysis}</ReactMarkdown> {/* Render markdown here */}
                         </div>
                       </div>
                     </div>
