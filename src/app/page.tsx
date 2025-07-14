@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Wind, Brain, BarChart3, User, Sparkles, Heart, ArrowRight } from 'lucide-react';
+import { Wind, Brain, BarChart3, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -25,7 +25,7 @@ export default function HomePage() {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -89,26 +89,6 @@ export default function HomePage() {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-orange-500" />
-                Profile
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Manage your personal information and customize your experience.
-              </p>
-              <Link href="/profile">
-                <Button className="w-full" variant="outline">
-                  Edit Profile
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-pink-500" />
                 Wellness Journey
               </CardTitle>
@@ -120,26 +100,6 @@ export default function HomePage() {
               <Link href="/stress-tracker?tab=calendar">
                 <Button className="w-full" variant="outline">
                   View Progress
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="h-5 w-5 text-red-500" />
-                Mindfulness
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Discover mindfulness techniques and build healthy stress management habits.
-              </p>
-              <Link href="/ai-insights">
-                <Button className="w-full" variant="outline">
-                  Learn More
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </Link>
