@@ -141,7 +141,7 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const musicRef = useRef<HTMLAudioElement | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(timerRef);
   const totalTimeRef = useRef(0);
   const elapsedTimeRef = useRef(0);
   const isStoppingRef = useRef(false);
@@ -303,7 +303,10 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
   };
 
   const playMusicForStage = async (stageIndex: number) => {
-    if (isStoppingRef.current || !musicRef.current) return;
+    if (isStoppingRef.current) return;
+
+    const musicElement = musicRef.current; // Assign to a local variable
+    if (!musicElement) return; // Perform null check here
 
     const stage = exerciseStages[stageIndex];
     if (!stage) return;
@@ -315,9 +318,9 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     // Fallback to default music if no specific track is set or active
     if (!musicUrl || !musicTrack?.is_active) {
       // Check if the default music is already playing
-      if (musicRef.current.src === `${SUPABASE_URL}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3` && !musicRef.current.paused) {
+      if (musicElement.src === `${SUPABASE_URL}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3` && !musicElement.paused) {
         // If default is already playing, just ensure its volume is correct
-        fadeAudio(musicRef.current, musicRef.current.volume, musicVolume, 2); // Fade to default music volume
+        fadeAudio(musicElement, musicElement.volume, musicVolume, 2);
         setCurrentMusic(`${SUPABASE_URL}/storage/v1/object/public/background-music/music/1734969007248-relaxing-music.mp3`);
         return;
       } else {
@@ -334,35 +337,35 @@ export const BreathingExerciseAssistant: React.FC<BreathingExerciseAssistantProp
     const fadeInDuration = setting?.fade_in_duration || 2;
     const fadeOutDuration = setting?.fade_out_duration || 2;
 
-    const currentSrc = musicRef.current.src;
-    const isCurrentlyPlaying = !musicRef.current.paused;
+    const currentSrc = musicElement.src;
+    const isCurrentlyPlaying = !musicElement.paused;
 
     if (currentSrc !== musicUrl) {
         // Different music track or no music was playing
         const startNewMusic = async () => {
-            musicRef.current.src = musicUrl;
-            musicRef.current.volume = 0; // Start from 0 for fade-in
-            await musicRef.current.play();
-            fadeAudio(musicRef.current, 0, targetVolume, fadeInDuration);
+            musicElement.src = musicUrl;
+            musicElement.volume = 0; // Start from 0 for fade-in
+            await musicElement.play();
+            fadeAudio(musicElement, 0, targetVolume, fadeInDuration);
             setCurrentMusic(musicUrl);
         };
 
         if (isCurrentlyPlaying) {
             // Fade out current music, then start new one
-            fadeAudio(musicRef.current, musicRef.current.volume, 0, fadeOutDuration, startNewMusic);
+            fadeAudio(musicElement, musicElement.volume, 0, fadeOutDuration, startNewMusic);
         } else {
             // No music playing, just start new one with fade-in
             startNewMusic();
         }
     } else {
         // Same music track
-        if (musicRef.current.volume !== targetVolume) {
+        if (musicElement.volume !== targetVolume) {
             // Adjust volume if needed
-            fadeAudio(musicRef.current, musicRef.current.volume, targetVolume, Math.max(fadeInDuration, fadeOutDuration));
+            fadeAudio(musicElement, musicElement.volume, targetVolume, Math.max(fadeInDuration, fadeOutDuration));
         }
         if (!isCurrentlyPlaying) {
             // Resume if paused
-            await musicRef.current.play();
+            await musicElement.play();
         }
         setCurrentMusic(musicUrl); // Ensure state is updated
     }
