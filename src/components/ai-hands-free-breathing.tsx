@@ -6,23 +6,14 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService } from '@/lib/openai-voice-service';
-import { X, Frown, Meh, Angry, Smile, Annoyed, Sparkles, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { BouncingBallsLoader } from './bouncing-balls-loader';
 import { GuidedBreathingAnimation } from './guided-breathing-animation';
+import { Input } from '@/components/ui/input';
 
-type ExerciseState = 'loading' | 'welcome' | 'mood-selection' | 'exercise' | 'completion';
-
-const moods = [
-  { name: 'Anxious', icon: Frown, color: 'text-orange-500', hoverBgColor: 'hover:bg-orange-50', selectedBgColor: 'bg-orange-50', selectedBorderColor: 'border-orange-500' },
-  { name: 'Stressed', icon: Annoyed, color: 'text-red-500', hoverBgColor: 'hover:bg-red-50', selectedBgColor: 'bg-red-50', selectedBorderColor: 'border-red-500' },
-  { name: 'Tired', icon: Meh, color: 'text-gray-500', hoverBgColor: 'hover:bg-gray-50', selectedBgColor: 'bg-gray-50', selectedBorderColor: 'border-gray-500' },
-  { name: 'Sad', icon: Frown, color: 'text-blue-500', hoverBgColor: 'hover:bg-blue-50', selectedBgColor: 'bg-blue-50', selectedBorderColor: 'border-blue-500' },
-  { name: 'Angry', icon: Angry, color: 'text-red-600', hoverBgColor: 'hover:bg-red-50', selectedBgColor: 'bg-red-50', selectedBorderColor: 'border-red-600' },
-  { name: 'Calm', icon: Smile, color: 'text-green-500', hoverBgColor: 'hover:bg-green-50', selectedBgColor: 'bg-green-50', selectedBorderColor: 'border-green-500' },
-  { name: 'Energized', icon: Sparkles, color: 'text-yellow-500', hoverBgColor: 'hover:bg-yellow-50', selectedBgColor: 'bg-yellow-50', selectedBorderColor: 'border-yellow-500' },
-];
+type ExerciseState = 'loading' | 'welcome' | 'mood-input' | 'analyzing' | 'exercise' | 'completion';
 
 interface BreathingExercise {
   name: string;
@@ -56,8 +47,8 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const router = useRouter();
   const [exerciseState, setExerciseState] = useState<ExerciseState>('loading');
   const [firstName, setFirstName] = useState<string>('there');
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [processingMood, setProcessingMood] = useState<string | null>(null);
+  const [moodInputText, setMoodInputText] = useState('');
+  const [detectedMood, setDetectedMood] = useState<string | null>(null);
   const [phaseDuration, setPhaseDuration] = useState(0);
   const [instruction, setInstruction] = useState('');
   const [animationScale, setAnimationScale] = useState(1);
@@ -140,9 +131,9 @@ export const AIHandsFreeBreathing: React.FC = () => {
   useEffect(() => {
     if (exerciseState === 'welcome' && firstName) {
       const welcome = async () => {
-        await playAudio(`Welcome, ${firstName}. How are you feeling today?`);
+        await playAudio(`Welcome, ${firstName}. How are you feeling today? Please describe your mood or how you're feeling in your own words.`);
         if (isMountedRef.current) {
-          setExerciseState('mood-selection');
+          setExerciseState('mood-input');
         }
       };
       welcome();
@@ -208,33 +199,41 @@ export const AIHandsFreeBreathing: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (exerciseState === 'exercise' && selectedMood) {
-      startExercise(selectedMood);
+    if (exerciseState === 'exercise' && detectedMood) {
+      startExercise(detectedMood);
     }
-  }, [exerciseState, selectedMood, startExercise]);
+  }, [exerciseState, detectedMood, startExercise]);
 
   useEffect(() => {
     if (exerciseState === 'completion') {
       playAudio(`Well done, ${firstName}. Whenever you're ready, you may repeat this session or close the screen.`);
-      if (selectedMood) {
-        saveStressEntryFromMood(selectedMood);
+      if (detectedMood) {
+        saveStressEntryFromMood(detectedMood);
       }
     }
-  }, [exerciseState, firstName, playAudio, selectedMood, saveStressEntryFromMood]);
+  }, [exerciseState, firstName, playAudio, detectedMood, saveStressEntryFromMood]);
 
-  const handleMoodSelect = async (mood: string) => {
-    setProcessingMood(mood);
-    setSelectedMood(mood);
+  const handleMoodSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!moodInputText.trim()) return;
+
+    setExerciseState('analyzing');
+    
+    const mood = await openaiVoiceService.analyzeMoodFromText(moodInputText);
+    if (!isMountedRef.current) return;
+
+    setDetectedMood(mood);
     const exercise = moodExercises[mood];
-    await playAudio(`I understand you're feeling ${mood.toLowerCase()}, ${firstName}. To help ${exercise.reassurance}, we will practice ${exercise.name}. ${exercise.intro}`);
+    
+    await playAudio(`Thank you for sharing, ${firstName}. I understand you’re feeling ${mood.toLowerCase()}. I will guide you through a transformative meditation to help you ${exercise.reassurance}.`);
+    
     if (isMountedRef.current) {
       setExerciseState('exercise');
-      setProcessingMood(null);
     }
   };
 
   const handleRepeat = () => {
-    if (selectedMood) {
+    if (detectedMood) {
       setExerciseState('exercise');
     }
   };
@@ -249,36 +248,28 @@ export const AIHandsFreeBreathing: React.FC = () => {
             <p className="text-xl mt-8 text-muted-foreground">Preparing your session...</p>
           </div>
         );
-      case 'mood-selection':
+      case 'mood-input':
         return (
           <div className="w-full max-w-2xl text-center">
-            <h1 className="text-4xl font-bold mb-8">How are you feeling today?</h1>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {moods.map(mood => {
-                const Icon = mood.icon;
-                const isProcessingThis = processingMood === mood.name;
-                return (
-                  <Button
-                    key={mood.name}
-                    variant="outline"
-                    className={cn(
-                      "h-24 text-lg flex flex-col gap-2 transition-colors",
-                      !processingMood && mood.hoverBgColor,
-                      isProcessingThis && `${mood.selectedBgColor} border-2 ${mood.selectedBorderColor}`
-                    )}
-                    onClick={() => handleMoodSelect(mood.name)}
-                    disabled={processingMood !== null}
-                  >
-                    {isProcessingThis ? (
-                      <Loader2 className={cn("h-10 w-10 animate-spin", mood.color)} />
-                    ) : (
-                      <Icon className={cn("h-10 w-10", mood.color)} strokeWidth={1.5} />
-                    )}
-                    {isProcessingThis ? 'Preparing...' : mood.name}
-                  </Button>
-                );
-              })}
-            </div>
+            <h1 className="text-4xl font-bold mb-8">How are you feeling?</h1>
+            <form onSubmit={handleMoodSubmit} className="flex flex-col items-center gap-4">
+              <Input
+                type="text"
+                value={moodInputText}
+                onChange={(e) => setMoodInputText(e.target.value)}
+                placeholder="Describe how you're feeling..."
+                className="text-center text-xl h-16"
+                autoFocus
+              />
+              <Button type="submit" size="lg">Continue</Button>
+            </form>
+          </div>
+        );
+      case 'analyzing':
+        return (
+          <div className="flex flex-col items-center justify-center">
+            <BouncingBallsLoader />
+            <p className="text-xl mt-8 text-muted-foreground">Analyzing your mood...</p>
           </div>
         );
       case 'exercise':
@@ -292,7 +283,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
               />
             </div>
             <p className="text-2xl text-muted-foreground pb-8 font-heading">
-              {moodExercises[selectedMood!]?.name}
+              {moodExercises[detectedMood!]?.name}
             </p>
           </div>
         );

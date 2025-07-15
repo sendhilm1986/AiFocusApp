@@ -180,6 +180,39 @@ class OpenAIVoiceService {
     }
   }
 
+  async analyzeMoodFromText(moodText: string): Promise<string> {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('Authentication error: Could not get user session.');
+      }
+
+      const functionUrl = `${this.supabaseFunctionsUrl}/analyze-mood`;
+
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ moodText }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response from server.' }));
+        throw new Error(errorData.error || `Server error: ${response.status} ${response.statusText}`);
+      }
+
+      const { mood } = await response.json();
+      return mood;
+
+    } catch (error: any) {
+      console.error('=== CLIENT: Mood analysis failed, using fallback ===', error);
+      // Fallback to a default mood if the function fails
+      return 'Calm';
+    }
+  }
+
   clearCache() {
     console.log('Clearing audio cache, entries:', this.audioCache.size);
     for (const url of this.audioCache.values()) {
