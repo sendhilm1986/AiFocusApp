@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useSession } from "@/components/session-context-provider";
 import { usePathname } from "next/navigation";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -72,7 +73,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>Clarity & Peace</title>
         <meta name="description" content="Track your stress, get AI insights, and improve your well-being with Clarity & Peace." />
@@ -80,12 +81,19 @@ export default function RootLayout({
       <body
         className={`${playfair.variable} ${spaceGrotesk.variable} font-body antialiased`}
       >
-        <SessionContextProvider>
-          <LayoutContent>
-            {children}
-          </LayoutContent>
-        </SessionContextProvider>
-        <Toaster richColors position="top-center" />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SessionContextProvider>
+            <LayoutContent>
+              {children}
+            </LayoutContent>
+          </SessionContextProvider>
+          <Toaster richColors position="top-center" />
+        </ThemeProvider>
       </body>
     </html>
   );

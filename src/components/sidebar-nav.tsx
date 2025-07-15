@@ -11,6 +11,7 @@ import { useSession } from "@/components/session-context-provider";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ThemeToggle } from "./theme-toggle";
 
 // Admin email - only this user should see the admin link
 const ADMIN_EMAIL = 'clarityandpeace@pxdmail.com';
@@ -158,16 +159,18 @@ export function SidebarNav() {
               )}
             </div>
             
-            {/* Logout Button */}
-            <Button
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              variant="ghost"
-              className="justify-start text-sidebar-foreground hover:bg-red-50 hover:text-red-700 w-full"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              {isLoggingOut ? "Signing out..." : "Sign Out"}
-            </Button>
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                variant="ghost"
+                className="flex-1 justify-start text-sidebar-foreground hover:bg-red-50 hover:text-red-700"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {isLoggingOut ? "Signing out..." : "Sign Out"}
+              </Button>
+              <ThemeToggle />
+            </div>
           </div>
         </>
       )}
