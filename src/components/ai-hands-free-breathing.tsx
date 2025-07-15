@@ -6,20 +6,20 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService } from '@/lib/openai-voice-service';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Frown, Meh, Angry, Smile, Annoyed, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 
 type ExerciseState = 'loading' | 'welcome' | 'mood-selection' | 'exercise' | 'completion';
 
 const moods = [
-  { name: 'Anxious', emoji: '😟' },
-  { name: 'Stressed', emoji: '😫' },
-  { name: 'Tired', emoji: '😴' },
-  { name: 'Sad', emoji: '😢' },
-  { name: 'Angry', emoji: '😠' },
-  { name: 'Calm', emoji: '😌' },
-  { name: 'Energized', emoji: '⚡️' },
+  { name: 'Anxious', icon: Frown, color: 'text-orange-500', bgColor: 'hover:bg-orange-50' },
+  { name: 'Stressed', icon: Annoyed, color: 'text-red-500', bgColor: 'hover:bg-red-50' },
+  { name: 'Tired', icon: Meh, color: 'text-gray-500', bgColor: 'hover:bg-gray-50' },
+  { name: 'Sad', icon: Frown, color: 'text-blue-500', bgColor: 'hover:bg-blue-50' },
+  { name: 'Angry', icon: Angry, color: 'text-red-600', bgColor: 'hover:bg-red-50' },
+  { name: 'Calm', icon: Smile, color: 'text-green-500', bgColor: 'hover:bg-green-50' },
+  { name: 'Energized', icon: Sparkles, color: 'text-yellow-500', bgColor: 'hover:bg-yellow-50' },
 ];
 
 interface BreathingExercise {
@@ -205,12 +205,20 @@ export const AIHandsFreeBreathing: React.FC = () => {
           <div className="w-full max-w-2xl text-center">
             <h1 className="text-4xl font-bold mb-8">How are you feeling today?</h1>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {moods.map(mood => (
-                <Button key={mood.name} variant="outline" className="h-24 text-lg flex flex-col gap-2" onClick={() => handleMoodSelect(mood.name)}>
-                  <span className="text-4xl">{mood.emoji}</span>
-                  {mood.name}
-                </Button>
-              ))}
+              {moods.map(mood => {
+                const Icon = mood.icon;
+                return (
+                  <Button
+                    key={mood.name}
+                    variant="outline"
+                    className={cn("h-24 text-lg flex flex-col gap-2 transition-colors", mood.bgColor)}
+                    onClick={() => handleMoodSelect(mood.name)}
+                  >
+                    <Icon className={cn("h-10 w-10", mood.color)} strokeWidth={1.5} />
+                    {mood.name}
+                  </Button>
+                );
+              })}
             </div>
           </div>
         );

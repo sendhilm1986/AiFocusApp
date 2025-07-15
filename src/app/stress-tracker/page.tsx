@@ -9,9 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
+  Laugh,
   Smile, 
   Meh, 
   Frown, 
+  Angry,
   Activity, 
   Calendar,
   TrendingUp,
@@ -34,11 +36,11 @@ interface StressEntry {
 }
 
 const stressLevels = [
-  { value: 1, label: 'Very Low', icon: Smile, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
+  { value: 1, label: 'Very Low', icon: Laugh, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
   { value: 2, label: 'Low', icon: Smile, color: 'text-lime-600', bgColor: 'bg-lime-50', borderColor: 'border-lime-200' },
   { value: 3, label: 'Moderate', icon: Meh, color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' },
   { value: 4, label: 'High', icon: Frown, color: 'text-orange-600', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' },
-  { value: 5, label: 'Very High', icon: Frown, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
+  { value: 5, label: 'Very High', icon: Angry, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
 ];
 
 export default function StressTrackerPage() {
@@ -241,7 +243,11 @@ export default function StressTrackerPage() {
                         onClick={() => setSelectedStress(level.value)}
                       >
                         <CardContent className="p-4 text-center">
-                          <Icon className={`h-8 w-8 mx-auto mb-2 ${isSelected ? level.color : 'text-muted-foreground'}`} />
+                          <Icon
+                            className={`h-8 w-8 mx-auto mb-2 transition-all ${isSelected ? level.color : 'text-muted-foreground'}`}
+                            fill={isSelected ? 'currentColor' : 'none'}
+                            strokeWidth={1.5}
+                          />
                           <p className={`font-medium text-sm ${isSelected ? level.color : 'text-foreground'}`}>
                             {level.label}
                           </p>
