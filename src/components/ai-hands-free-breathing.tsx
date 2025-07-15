@@ -8,6 +8,7 @@ import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService } from '@/lib/openai-voice-service';
 import { X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from './theme-toggle';
 
 type ExerciseState = 'loading' | 'welcome' | 'mood-selection' | 'exercise' | 'completion';
 
@@ -244,9 +245,12 @@ export const AIHandsFreeBreathing: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-background flex items-center justify-center p-4">
-      <Button variant="ghost" size="icon" className="absolute top-6 right-6 z-50" onClick={() => router.push('/')}>
-        <X className="h-8 w-8" />
-      </Button>
+      <div className="absolute top-6 right-6 z-50 flex items-center gap-2">
+        <ThemeToggle />
+        <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
+          <X className="h-8 w-8" />
+        </Button>
+      </div>
       {renderContent()}
     </div>
   );
