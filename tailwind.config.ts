@@ -103,13 +103,28 @@ export default {
         'spin-very-slow': {
           from: { transform: 'rotate(0deg)' },
           to: { transform: 'rotate(360deg)' },
-        }
+        },
+        'wavy': {
+          '0%, 100%': { borderRadius: '42% 58% 70% 30% / 45% 45% 55% 55%' },
+          '50%': { borderRadius: '30% 70% 40% 60% / 60% 40% 50% 50%' },
+        },
+        'spin-slow': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
+        'spin-medium': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(-360deg)' },
+        },
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'bounce': 'bounce 1s infinite',
         'spin-very-slow': 'spin-very-slow 25s linear infinite',
+        'wavy': 'wavy 15s linear infinite',
+        'spin-slow': 'spin-slow 20s linear infinite',
+        'spin-medium': 'spin-medium 30s linear infinite',
   		}
   	}
   },
