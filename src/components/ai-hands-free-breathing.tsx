@@ -10,7 +10,7 @@ import { X, Frown, Meh, Angry, Smile, Annoyed, Sparkles, Loader2 } from 'lucide-
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { BouncingBallsLoader } from './bouncing-balls-loader';
-import { BreathingAnimation } from './breathing-animation';
+import { GuidedBreathingAnimation } from './guided-breathing-animation';
 
 type ExerciseState = 'loading' | 'welcome' | 'mood-selection' | 'exercise' | 'completion';
 
@@ -141,8 +141,8 @@ export const AIHandsFreeBreathing: React.FC = () => {
         currentIndex = 0;
       }
 
-      const phase = pattern[currentIndex];
-      const duration = pattern[currentIndex + 1];
+      const phase = pattern[currentIndex] as string;
+      const duration = pattern[currentIndex + 1] as number;
 
       if (typeof phase !== 'string' || typeof duration !== 'number') {
         console.error('Malformed breathing pattern detected. Stopping exercise.');
@@ -152,10 +152,11 @@ export const AIHandsFreeBreathing: React.FC = () => {
 
       if (isMountedRef.current) {
         if (phase === 'inhale') {
-          setAnimationScale(1.2);
+          setAnimationScale(1.4);
         } else if (phase === 'exhale') {
           setAnimationScale(1);
         }
+        // On 'hold', scale is not changed, so it stays at the previous value
 
         setPhaseDuration(duration);
         setInstruction(phase.charAt(0).toUpperCase() + phase.slice(1));
@@ -246,13 +247,11 @@ export const AIHandsFreeBreathing: React.FC = () => {
         return (
           <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
             <div className="relative flex-grow flex items-center justify-center">
-              <BreathingAnimation scale={animationScale} duration={phaseDuration} />
-              <p
-                className="absolute text-4xl font-bold text-white tracking-widest uppercase"
-                style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
-              >
-                {instruction}
-              </p>
+              <GuidedBreathingAnimation
+                scale={animationScale}
+                duration={phaseDuration}
+                text={instruction}
+              />
             </div>
             <p className="text-2xl text-muted-foreground pb-8">
               {moodExercises[selectedMood!]?.name}
