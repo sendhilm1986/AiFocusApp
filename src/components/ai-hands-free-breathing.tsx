@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService, CustomExercise } from '@/lib/openai-voice-service';
 import { X, Music } from 'lucide-react';
@@ -14,13 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 type ExerciseState = 'loading' | 'welcome' | 'mood-input' | 'analyzing' | 'exercise' | 'completion';
-
-const musicMap: Record<string, string> = {
-  'Calm Piano': `${SUPABASE_URL}/storage/v1/object/public/background-music/calm-piano.mp3`,
-  'Nature Sounds': `${SUPABASE_URL}/storage/v1/object/public/background-music/nature-sounds.mp3`,
-  'Ambient Pad': `${SUPABASE_URL}/storage/v1/object/public/background-music/ambient-pad.mp3`,
-  'Acoustic Guitar': `${SUPABASE_URL}/storage/v1/object/public/background-music/acoustic-guitar.mp3`,
-};
 
 export const AIHandsFreeBreathing: React.FC = () => {
   const { session } = useSession();
@@ -57,25 +50,23 @@ export const AIHandsFreeBreathing: React.FC = () => {
     }
   }, []);
 
-  const playMusicForExercise = useCallback(async (style: CustomExercise['musicStyle']) => {
-    if (!musicRef.current || style === 'None') return;
-
-    const musicUrl = musicMap[style];
-    if (!musicUrl) {
-      console.warn(`Music style "${style}" not found in musicMap.`);
-      return;
-    }
+  const fetchAndPlayMusic = useCallback(async (category: string) => {
+    if (!musicRef.current || category.toLowerCase() === 'none') return;
 
     try {
-      if (isMountedRef.current) {
-        musicRef.current.src = musicUrl;
+      const tracks = await openaiVoiceService.fetchMusic(category);
+      if (tracks.length > 0 && isMountedRef.current) {
+        const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+        musicRef.current.src = randomTrack.url;
         musicRef.current.loop = true;
-        musicRef.current.volume = 0.15; // Subtle background volume
+        musicRef.current.volume = 0.15;
         await musicRef.current.play();
         setMusicPlaying(true);
+      } else {
+        console.warn(`No suitable music found for category: ${category}`);
       }
     } catch (error) {
-      console.error("Failed to play music:", error);
+      console.error("Failed to fetch or play music:", error);
       setMusicPlaying(false);
     }
   }, []);
@@ -147,7 +138,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const startExercise = useCallback((exercise: CustomExercise) => {
     if (!exercise) return;
 
-    playMusicForExercise(exercise.musicStyle);
+    fetchAndPlayMusic(exercise.musicCategory);
     setAnimationScale(1);
     let currentIndex = -1;
     const pattern = exercise.pattern;
@@ -187,7 +178,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
       }
     };
     runCycle();
-  }, [playMusicForExercise]);
+  }, [fetchAndPlayMusic, playAudio]);
 
   useEffect(() => {
     if (exerciseState === 'exercise' && customExercise) {
