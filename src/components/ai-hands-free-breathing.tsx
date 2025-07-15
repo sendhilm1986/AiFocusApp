@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService, CustomExercise } from '@/lib/openai-voice-service';
-import { X, Music } from 'lucide-react';
+import { X, Music, Volume2, VolumeX } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { BouncingBallsLoader } from './bouncing-balls-loader';
 import { GuidedBreathingAnimation } from './guided-breathing-animation';
@@ -32,11 +32,25 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const [animationScale, setAnimationScale] = useState(1);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [availableMusic, setAvailableMusic] = useState<BackgroundMusic[]>([]);
+  const [isMuted, setIsMuted] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const exerciseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
+
+  const toggleMute = () => {
+    setIsMuted(prev => !prev);
+  };
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted;
+    }
+    if (musicRef.current) {
+      musicRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
 
   const fadeAudio = useCallback((audioElement: HTMLAudioElement, targetVolume: number, duration: number, onComplete?: () => void) => {
     const startVolume = audioElement.volume;
@@ -139,7 +153,9 @@ export const AIHandsFreeBreathing: React.FC = () => {
   useEffect(() => {
     isMountedRef.current = true;
     audioRef.current = new Audio();
+    audioRef.current.muted = isMuted;
     musicRef.current = new Audio();
+    musicRef.current.muted = isMuted;
 
     const fetchInitialData = async () => {
       if (session?.user) {
@@ -182,7 +198,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
         musicRef.current = null;
       }
     };
-  }, [session]);
+  }, [session, isMuted]);
 
   useEffect(() => {
     if (exerciseState === 'welcome' && firstName) {
@@ -299,7 +315,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
       case 'mood-input':
         return (
           <div className="w-full max-w-2xl text-center">
-            <h1 className="text-4xl font-bold mb-8">How are you feeling?</h1>
+            <h1 className="text-4xl font-bold font-heading mb-8">How are you feeling?</h1>
             <form onSubmit={handleMoodSubmit} className="flex flex-col items-center gap-4">
               <Input
                 type="text"
@@ -360,6 +376,9 @@ export const AIHandsFreeBreathing: React.FC = () => {
   return (
     <div className="fixed inset-0 bg-background flex items-center justify-center p-4">
       <div className="absolute top-6 right-6 z-50 flex items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={toggleMute}>
+          {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+        </Button>
         <ThemeToggle />
         <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
           <X className="h-8 w-8" />
