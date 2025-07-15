@@ -225,7 +225,10 @@ export const AIHandsFreeBreathing: React.FC = () => {
           <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
             <div className="relative flex-grow flex items-center justify-center">
               <BreathingAnimation phase={breathingPhase} duration={phaseDuration} />
-              <p className="absolute text-4xl font-bold text-primary-foreground tracking-widest uppercase">
+              <p
+                className="absolute text-4xl font-bold text-white tracking-widest uppercase"
+                style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
+              >
                 {instruction}
               </p>
             </div>

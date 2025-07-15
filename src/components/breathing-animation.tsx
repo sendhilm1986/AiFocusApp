@@ -15,7 +15,7 @@ export const BreathingAnimation: React.FC<BreathingAnimationProps> = ({ phase, d
     <div className="relative w-64 h-64 flex items-center justify-center">
       {/* Outer glow */}
       <div
-        className="absolute w-full h-full rounded-full bg-primary/10 transition-all ease-in-out"
+        className="absolute w-full h-full rounded-full bg-chart-1/20 transition-all ease-in-out"
         style={{
           transform: `scale(${scale * 1.2})`,
           transitionDuration: `${duration}s`,
@@ -24,7 +24,7 @@ export const BreathingAnimation: React.FC<BreathingAnimationProps> = ({ phase, d
       />
       {/* Main circle */}
       <div
-        className="absolute w-full h-full rounded-full bg-gradient-to-br from-primary/50 to-primary/80 transition-all ease-in-out"
+        className="absolute w-full h-full rounded-full bg-gradient-to-br from-chart-1/70 to-chart-2/70 transition-all ease-in-out"
         style={{
           transform: `scale(${scale})`,
           transitionDuration: `${duration}s`,
@@ -33,7 +33,7 @@ export const BreathingAnimation: React.FC<BreathingAnimationProps> = ({ phase, d
       />
       {/* Inner core */}
       <div
-        className="absolute w-1/2 h-1/2 rounded-full bg-primary/90 transition-all ease-in-out"
+        className="absolute w-1/2 h-1/2 rounded-full bg-gradient-to-br from-chart-1 to-chart-2 transition-all ease-in-out"
         style={{
           transform: `scale(${scale * 0.9})`,
           transitionDuration: `${duration}s`,
