@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService, CustomExercise } from '@/lib/openai-voice-service';
-import { X } from 'lucide-react';
+import { X, Music } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { BouncingBallsLoader } from './bouncing-balls-loader';
 import { GuidedBreathingAnimation } from './guided-breathing-animation';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 type ExerciseState = 'loading' | 'welcome' | 'mood-input' | 'analyzing' | 'exercise' | 'completion';
 
@@ -24,8 +25,10 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const [phaseDuration, setPhaseDuration] = useState(0);
   const [instruction, setInstruction] = useState('');
   const [animationScale, setAnimationScale] = useState(1);
+  const [musicPlaying, setMusicPlaying] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const musicRef = useRef<HTMLAudioElement | null>(null);
   const exerciseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
 
@@ -44,6 +47,24 @@ export const AIHandsFreeBreathing: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to play audio:", error);
+    }
+  }, []);
+
+  const fetchAndPlayMusic = useCallback(async (category: string) => {
+    if (!musicRef.current) return;
+    try {
+      const tracks = await openaiVoiceService.fetchMusic(category);
+      if (tracks && tracks.length > 0 && isMountedRef.current) {
+        const track = tracks[Math.floor(Math.random() * tracks.length)];
+        musicRef.current.src = track.audio;
+        musicRef.current.loop = true;
+        musicRef.current.volume = 0.15; // Subtle background volume
+        await musicRef.current.play();
+        setMusicPlaying(true);
+      }
+    } catch (error) {
+      console.error("Failed to fetch or play music:", error);
+      setMusicPlaying(false);
     }
   }, []);
 
@@ -69,6 +90,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
   useEffect(() => {
     isMountedRef.current = true;
     audioRef.current = new Audio();
+    musicRef.current = new Audio();
 
     const fetchUser = async () => {
       if (session?.user) {
@@ -91,6 +113,10 @@ export const AIHandsFreeBreathing: React.FC = () => {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current = null;
+      }
     };
   }, [session]);
 
@@ -109,6 +135,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const startExercise = useCallback((exercise: CustomExercise) => {
     if (!exercise) return;
 
+    fetchAndPlayMusic(exercise.musicCategory);
     setAnimationScale(1);
     let currentIndex = -1;
     const pattern = exercise.pattern;
@@ -148,7 +175,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
       }
     };
     runCycle();
-  }, []);
+  }, [fetchAndPlayMusic]);
 
   useEffect(() => {
     if (exerciseState === 'exercise' && customExercise) {
@@ -158,6 +185,8 @@ export const AIHandsFreeBreathing: React.FC = () => {
 
   useEffect(() => {
     if (exerciseState === 'completion' && customExercise) {
+      if (musicRef.current) musicRef.current.pause();
+      setMusicPlaying(false);
       playAudio(customExercise.completionGuidance);
       saveStressEntry(customExercise);
     }
@@ -181,7 +210,6 @@ export const AIHandsFreeBreathing: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to generate custom exercise:", error);
-      // Handle error state in UI
       if (isMountedRef.current) {
         playAudio("I'm sorry, I had trouble creating an exercise. Please try describing your mood again.");
         setExerciseState('mood-input');
@@ -239,9 +267,17 @@ export const AIHandsFreeBreathing: React.FC = () => {
                 text={instruction}
               />
             </div>
-            <p className="text-2xl text-muted-foreground pb-8 font-heading">
-              {customExercise?.exerciseName}
-            </p>
+            <div className="pb-8 flex flex-col items-center gap-2">
+              <p className="text-2xl text-muted-foreground font-heading">
+                {customExercise?.exerciseName}
+              </p>
+              {musicPlaying && (
+                <Badge variant="outline" className="bg-green-50 text-green-700">
+                  <Music className="h-3 w-3 mr-1" />
+                  Music by Pixabay
+                </Badge>
+              )}
+            </div>
           </div>
         );
       case 'completion':
