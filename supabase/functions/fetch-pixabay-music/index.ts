@@ -46,7 +46,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const musicApiUrl = `https://pixabay.com/api/music/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(category)}&category=${encodeURIComponent(category)}&safesearch=true&order=latest&per_page=50`;
+    const musicApiUrl = `https://pixabay.com/api/music/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(category)}&safesearch=true&order=latest&per_page=50`;
 
     const pixabayResponse = await fetch(musicApiUrl);
 
@@ -66,7 +66,7 @@ serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error('Error in fetch-pixabay-music function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
