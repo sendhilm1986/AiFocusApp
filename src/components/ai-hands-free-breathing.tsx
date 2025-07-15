@@ -9,7 +9,7 @@ import { openaiVoiceService } from '@/lib/openai-voice-service';
 import { X, Loader2, Frown, Meh, Angry, Smile, Annoyed, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
-import { BreathingLoader } from './breathing-loader';
+import { BouncingBallsLoader } from './bouncing-balls-loader';
 
 type ExerciseState = 'loading' | 'welcome' | 'mood-selection' | 'exercise' | 'completion';
 
@@ -197,7 +197,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
       case 'welcome':
         return (
           <div className="flex flex-col items-center justify-center">
-            <BreathingLoader />
+            <BouncingBallsLoader />
             <p className="text-xl mt-8 text-muted-foreground">Preparing your session...</p>
           </div>
         );
