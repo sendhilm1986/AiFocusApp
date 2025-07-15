@@ -10,7 +10,7 @@ The application provides a seamless journey for users to manage their well-being
 2.  **Dashboard:** After logging in, users land on the **Dashboard**, which serves as a central hub with quick links to all major features.
 3.  **Stress Tracking:** Users navigate to the **Stress Tracker** to log their current stress level (from 1 to 5) and add optional notes. This is the primary way users input data into the system.
 4.  **Guided Exercises:** If a user records a high stress level, they are prompted to begin an **AI-Guided Breathing Exercise**. These sessions are dynamically tailored to the user's reported stress, featuring a calming voice, personalized guidance, and configurable background music.
-5.  **Hands-Free AI Breathing:** For a more immersive experience, users can access the **AI Hands-Free Breathing** page. This distraction-free interface guides them through exercises based on their selected mood, using voice commands and visual cues.
+5.  **Hands-Free AI Breathing:** For a truly personalized and immersive experience, users can access the **AI Hands-Free Breathing** page. Instead of selecting a pre-defined exercise, the user describes their current mood in their own words. The application's AI then interprets this mood and generates a completely unique breathing exercise—with a custom pattern, duration, and name—tailored to their immediate needs. The entire session is guided by voice and synchronized visual cues.
 6.  **Review & Reflect:** Users can review their past entries in the **History** tab or on the **Calendar View**, which provides a color-coded overview of their stress patterns over time.
 7.  **AI Insights:** On the **AI Insights** page, users can generate a detailed analysis of their stress data. The AI provides personalized recommendations, identifies patterns, and offers encouragement.
 8.  **Profile Management:** The **Profile Page** allows users to update their name (used for personalizing the AI's guidance) and change their password.
@@ -62,9 +62,7 @@ The application provides a seamless journey for users to manage their well-being
     *   Allows users to configure voice and volume settings.
 
 *   **`src/components/ai-hands-free-breathing.tsx`:**
-    *   Manages the entire hands-free user flow, from mood selection to exercise completion.
-    *   Uses AI voice to guide the user without any need for manual interaction after the initial mood selection.
-    *   Features a synchronized breathing animation.
+    *   Manages the entire hands-free user flow. It prompts the user to describe their mood, sends this text to the `generate-custom-exercise` function, and then leads the user through the unique, AI-generated breathing pattern. It features a synchronized breathing animation and provides full voice guidance, requiring no manual interaction after the initial mood input.
 
 *   **`src/components/stress-calendar.tsx`:**
     *   Visualizes stress entries on a monthly calendar.
@@ -93,7 +91,8 @@ The application provides a seamless journey for users to manage their well-being
 *   **`src/lib/openai-voice-service.ts`:** A client-side service that abstracts calls to Supabase Edge Functions for generating speech and guidance text.
 *   **`supabase/functions/`:**
     *   **`generate-speech`:** Generates an MP3 audio stream from text using the OpenAI API.
-    *   **`generate-breathing-guidance`:** Generates personalized, calming text for the breathing exercises.
+    *   **`generate-breathing-guidance`:** Generates personalized, calming text for the standard breathing exercises.
+    *   **`generate-custom-exercise`:** Interprets a user's described mood and generates a completely unique breathing exercise pattern and script in JSON format.
     *   **`analyze-stress`:** Generates a summary and recommendations based on a user's stress history.
     *   **`admin-service`:** A secure function for admin actions, using the service role key to bypass RLS for fetching all user data and analytics.
 

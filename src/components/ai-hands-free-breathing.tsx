@@ -310,7 +310,11 @@ export const AIHandsFreeBreathing: React.FC = () => {
       case 'mood-input':
         return (
           <div className="w-full max-w-2xl text-center">
-            <h1 className="text-4xl font-bold font-heading mb-8">How are you feeling?</h1>
+            <h1 className="text-4xl font-bold font-heading mb-8">
+              {firstName && firstName !== 'there' 
+                ? `How are you feeling, ${firstName}?` 
+                : 'How are you feeling?'}
+            </h1>
             <form onSubmit={handleMoodSubmit} className="flex flex-col items-center gap-4">
               <Input
                 type="text"
