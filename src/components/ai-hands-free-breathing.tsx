@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService } from '@/lib/openai-voice-service';
-import { X, Loader2, Frown, Meh, Angry, Smile, Annoyed, Sparkles } from 'lucide-react';
+import { X, Frown, Meh, Angry, Smile, Annoyed, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { BouncingBallsLoader } from './bouncing-balls-loader';
+import { BreathingAnimation } from './breathing-animation';
 
 type ExerciseState = 'loading' | 'welcome' | 'mood-selection' | 'exercise' | 'completion';
 
@@ -31,13 +32,13 @@ interface BreathingExercise {
 }
 
 const moodExercises: Record<string, BreathingExercise> = {
-  Anxious: { name: '4-7-8 Breathing', pattern: ['inhale', 4, 'hold', 7, 'exhale', 8], intro: "We'll practice 4-7-8 breathing to calm your mind and body.", reassurance: 'alleviate your anxiety' },
-  Stressed: { name: 'Box Breathing', pattern: ['inhale', 4, 'hold', 4, 'exhale', 4, 'hold', 4], intro: 'Box breathing will help you relieve stress and regain focus.', reassurance: 'help you relax' },
-  Tired: { name: 'Energizing Breath', pattern: ['inhale', 4, 'exhale', 2, 'inhale', 4, 'exhale', 2, 'inhale', 4, 'exhale', 2], intro: "Let's re-energize with a quick breathing exercise.", reassurance: 'boost your energy' },
-  Sad: { name: 'Coherent Breathing', pattern: ['inhale', 5, 'exhale', 5], intro: 'Resonant breathing can gently lift your mood.', reassurance: 'bring a sense of balance' },
-  Angry: { name: 'Calming Breath', pattern: ['inhale', 4, 'exhale', 8], intro: 'This extended exhale breathing can ease anger and restore balance.', reassurance: 'help you find calm' },
-  Calm: { name: 'Equal Breathing', pattern: ['inhale', 4, 'exhale', 4], intro: 'We will maintain your peaceful state with equal breathing exercises.', reassurance: 'continue your state of peace' },
-  Energized: { name: 'Power Breath', pattern: ['inhale', 6, 'hold', 2, 'exhale', 4], intro: "Let's channel your energy with a powerful breathing technique.", reassurance: 'focus your energy' },
+  Anxious: { name: '4-7-8 Breathing', pattern: ['inhale', 4, 'hold', 7, 'exhale', 8], intro: "This is a powerful technique for calming your nervous system. Let's begin.", reassurance: 'alleviate your anxiety' },
+  Stressed: { name: 'Box Breathing', pattern: ['inhale', 4, 'hold', 4, 'exhale', 4, 'hold', 4], intro: 'It will help you regulate your breath and clear your mind. Let us start.', reassurance: 'relieve your stress' },
+  Tired: { name: 'Energizing Breath', pattern: ['inhale', 4, 'exhale', 2, 'inhale', 4, 'exhale', 2, 'inhale', 4, 'exhale', 2], intro: "This rhythmic breathing will help awaken your senses. Let's get started.", reassurance: 'boost your energy' },
+  Sad: { name: 'Coherent Breathing', pattern: ['inhale', 5, 'exhale', 5], intro: 'This gentle rhythm can help create a sense of balance and peace. Let us begin.', reassurance: 'gently lift your mood' },
+  Angry: { name: 'Calming Breath', pattern: ['inhale', 4, 'exhale', 8], intro: 'Focusing on a longer exhale can help soothe feelings of anger. Let us start.', reassurance: 'find a sense of calm' },
+  Calm: { name: 'Equal Breathing', pattern: ['inhale', 4, 'exhale', 4], intro: 'This simple practice will help maintain your peaceful state. Let us begin.', reassurance: 'deepen your sense of peace' },
+  Energized: { name: 'Power Breath', pattern: ['inhale', 6, 'hold', 2, 'exhale', 4], intro: "This technique can help you focus your energy. Let's begin.", reassurance: 'channel your positive energy' },
 };
 
 export const AIHandsFreeBreathing: React.FC = () => {
@@ -46,7 +47,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const [exerciseState, setExerciseState] = useState<ExerciseState>('loading');
   const [firstName, setFirstName] = useState<string>('there');
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [breathingPhase, setBreathingPhase] = useState('');
+  const [breathingPhase, setBreathingPhase] = useState<'inhale' | 'exhale' | 'hold' | ''>('');
   const [phaseDuration, setPhaseDuration] = useState(0);
   const [instruction, setInstruction] = useState('');
 
@@ -124,23 +125,20 @@ export const AIHandsFreeBreathing: React.FC = () => {
     const runCycle = async () => {
       if (!isMountedRef.current) return;
 
-      // Move to the next phase/duration pair
       currentIndex += 2;
 
-      // Check if we've completed a full pattern loop
       if (currentIndex >= pattern.length) {
         currentCycle++;
         if (currentCycle >= totalCycles) {
           if (isMountedRef.current) setExerciseState('completion');
           return;
         }
-        currentIndex = 0; // Reset to the start of the pattern for the next cycle
+        currentIndex = 0;
       }
 
       const phase = pattern[currentIndex];
       const duration = pattern[currentIndex + 1];
 
-      // Type check to ensure pattern is not malformed and prevent runtime errors
       if (typeof phase !== 'string' || typeof duration !== 'number') {
         console.error('Malformed breathing pattern detected. Stopping exercise.');
         if (isMountedRef.current) setExerciseState('completion');
@@ -148,12 +146,11 @@ export const AIHandsFreeBreathing: React.FC = () => {
       }
 
       if (isMountedRef.current) {
-        setBreathingPhase(phase);
+        setBreathingPhase(phase as any);
         setPhaseDuration(duration);
         setInstruction(phase.charAt(0).toUpperCase() + phase.slice(1));
         await playAudio(phase);
 
-        // Only set the timeout if the component is still mounted after the audio plays
         if (isMountedRef.current) {
             exerciseTimerRef.current = setTimeout(() => {
                 if (isMountedRef.current) runCycle();
@@ -179,7 +176,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const handleMoodSelect = async (mood: string) => {
     setSelectedMood(mood);
     const exercise = moodExercises[mood];
-    await playAudio(`Thank you for sharing, ${firstName}. I will guide you through a transformative meditation to ${exercise.reassurance}. ${exercise.intro}`);
+    await playAudio(`I understand you're feeling ${mood.toLowerCase()}, ${firstName}. To help ${exercise.reassurance}, we will practice ${exercise.name}. ${exercise.intro}`);
     if (isMountedRef.current) {
       setExerciseState('exercise');
     }
@@ -225,17 +222,16 @@ export const AIHandsFreeBreathing: React.FC = () => {
         );
       case 'exercise':
         return (
-          <div className="text-center flex flex-col items-center">
-            <div
-              className={cn(
-                "w-48 h-48 rounded-full bg-primary/20 flex items-center justify-center transition-transform ease-in-out",
-                breathingPhase === 'inhale' ? 'scale-150' : 'scale-100'
-              )}
-              style={{ transitionDuration: `${phaseDuration}s` }}
-            >
-              <p className="text-3xl font-bold text-primary-foreground">{instruction}</p>
+          <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
+            <div className="relative flex-grow flex items-center justify-center">
+              <BreathingAnimation phase={breathingPhase} duration={phaseDuration} />
+              <p className="absolute text-4xl font-bold text-primary-foreground tracking-widest uppercase">
+                {instruction}
+              </p>
             </div>
-            <p className="text-2xl mt-8 text-muted-foreground">{moodExercises[selectedMood!]?.name}</p>
+            <p className="text-2xl text-muted-foreground pb-8">
+              {moodExercises[selectedMood!]?.name}
+            </p>
           </div>
         );
       case 'completion':
