@@ -19,7 +19,6 @@ The user's first name is ${firstName}.
     *   **Introductory:** Create a warm, reassuring intro that names the exercise and explains its benefit for their mood.
     *   **Completion:** Create a positive closing message.
 4.  **Estimate Stress Score:** Estimate a stress score from 1 (low) to 5 (high).
-5.  **Suggest Music Style:** Suggest a suitable music style from the following list: Calm Piano, Nature Sounds, Ambient Pad, Acoustic Guitar, None. The style should match the mood of the exercise.
 
 **Output Format:**
 
@@ -32,7 +31,6 @@ You MUST respond with a single, valid JSON object.
   "introductoryGuidance": "The full text for the introductory voice line.",
   "completionGuidance": "The full text for the completion voice line.",
   "stressScore": 3,
-  "musicStyle": "Calm Piano",
   "pattern": [
     { "phase": "inhale", "duration": 4 },
     { "phase": "hold", "duration": 2 },
@@ -111,12 +109,6 @@ serve(async (req: Request) => {
 
     const openaiData = await openaiResponse.json();
     const exerciseData = JSON.parse(openaiData.choices[0].message.content);
-
-    // Rename musicCategory to musicStyle for clarity
-    if (exerciseData.musicCategory) {
-        exerciseData.musicStyle = exerciseData.musicCategory;
-        delete exerciseData.musicCategory;
-    }
 
     return new Response(JSON.stringify(exerciseData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

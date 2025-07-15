@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService, CustomExercise } from '@/lib/openai-voice-service';
 import { X, Music } from 'lucide-react';
@@ -15,12 +15,10 @@ import { Badge } from '@/components/ui/badge';
 
 type ExerciseState = 'loading' | 'welcome' | 'mood-input' | 'analyzing' | 'exercise' | 'completion';
 
-const musicMap: Record<string, string> = {
-  'Calm Piano': `${SUPABASE_URL}/storage/v1/object/public/background-music/calm-piano.mp3`,
-  'Nature Sounds': `${SUPABASE_URL}/storage/v1/object/public/background-music/nature-sounds.mp3`,
-  'Ambient Pad': `${SUPABASE_URL}/storage/v1/object/public/background-music/ambient-pad.mp3`,
-  'Acoustic Guitar': `${SUPABASE_URL}/storage/v1/object/public/background-music/acoustic-guitar.mp3`,
-};
+interface BackgroundMusic {
+  id: string;
+  file_url: string;
+}
 
 export const AIHandsFreeBreathing: React.FC = () => {
   const { session } = useSession();
@@ -33,11 +31,73 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const [instruction, setInstruction] = useState('');
   const [animationScale, setAnimationScale] = useState(1);
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const [availableMusic, setAvailableMusic] = useState<BackgroundMusic[]>([]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const exerciseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
+
+  const fadeAudio = useCallback((audioElement: HTMLAudioElement, targetVolume: number, duration: number, onComplete?: () => void) => {
+    const startVolume = audioElement.volume;
+    if (startVolume === targetVolume && targetVolume > 0) {
+      onComplete?.();
+      return;
+    }
+    
+    const steps = 50;
+    const stepDuration = (duration * 1000) / steps;
+    const volumeStep = (targetVolume - startVolume) / steps;
+    let currentStep = 0;
+    let fadeInterval: NodeJS.Timeout;
+
+    const step = () => {
+      if (!isMountedRef.current) {
+        clearInterval(fadeInterval);
+        return;
+      }
+      currentStep++;
+      if (currentStep >= steps) {
+        clearInterval(fadeInterval);
+        audioElement.volume = targetVolume;
+        if (targetVolume === 0) {
+          audioElement.pause();
+        }
+        onComplete?.();
+      } else {
+        audioElement.volume += volumeStep;
+      }
+    };
+    fadeInterval = setInterval(step, stepDuration);
+  }, []);
+
+  const playBackgroundMusic = useCallback(() => {
+    if (!musicRef.current || availableMusic.length === 0) return;
+
+    const randomTrack = availableMusic[Math.floor(Math.random() * availableMusic.length)];
+    
+    musicRef.current.src = randomTrack.file_url;
+    musicRef.current.loop = true;
+    musicRef.current.volume = 0;
+    
+    musicRef.current.play().then(() => {
+      if (isMountedRef.current && musicRef.current) {
+        fadeAudio(musicRef.current, 0.1, 3); // Fade in over 3 seconds to 10% volume
+        setMusicPlaying(true);
+      }
+    }).catch(error => console.error("Music playback failed:", error));
+
+  }, [availableMusic, fadeAudio]);
+
+  const stopBackgroundMusic = useCallback(() => {
+    if (musicRef.current && !musicRef.current.paused) {
+      fadeAudio(musicRef.current, 0, 3, () => { // Fade out over 3 seconds
+        if (isMountedRef.current) {
+          setMusicPlaying(false);
+        }
+      });
+    }
+  }, [fadeAudio]);
 
   const playAudio = useCallback(async (text: string) => {
     if (!audioRef.current) return;
@@ -54,29 +114,6 @@ export const AIHandsFreeBreathing: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to play audio:", error);
-    }
-  }, []);
-
-  const playMusicForExercise = useCallback(async (style: CustomExercise['musicStyle']) => {
-    if (!musicRef.current || style === 'None') return;
-
-    const musicUrl = musicMap[style];
-    if (!musicUrl) {
-      console.warn(`Music style "${style}" not found in musicMap.`);
-      return;
-    }
-
-    try {
-      if (isMountedRef.current) {
-        musicRef.current.src = musicUrl;
-        musicRef.current.loop = true;
-        musicRef.current.volume = 0.15; // Subtle background volume
-        await musicRef.current.play();
-        setMusicPlaying(true);
-      }
-    } catch (error) {
-      console.error("Failed to play music:", error);
-      setMusicPlaying(false);
     }
   }, []);
 
@@ -104,19 +141,34 @@ export const AIHandsFreeBreathing: React.FC = () => {
     audioRef.current = new Audio();
     musicRef.current = new Audio();
 
-    const fetchUser = async () => {
+    const fetchInitialData = async () => {
       if (session?.user) {
         const { data } = await supabase.from('profiles').select('first_name').eq('id', session.user.id).single();
         if (data?.first_name && isMountedRef.current) {
           setFirstName(data.first_name);
         }
       }
+      
+      try {
+        const { data: musicData, error } = await supabase
+          .from('background_music')
+          .select('id, file_url')
+          .eq('is_active', true);
+
+        if (error) throw error;
+        if (isMountedRef.current) {
+          setAvailableMusic(musicData || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch music library:", error);
+      }
+
       if (isMountedRef.current) {
         setExerciseState('welcome');
       }
     };
 
-    fetchUser();
+    fetchInitialData();
 
     return () => {
       isMountedRef.current = false;
@@ -144,13 +196,13 @@ export const AIHandsFreeBreathing: React.FC = () => {
     }
   }, [exerciseState, firstName, playAudio]);
 
-  const startExercise = useCallback((exercise: CustomExercise) => {
-    if (!exercise) return;
+  const startExercise = useCallback(() => {
+    if (!customExercise) return;
 
-    playMusicForExercise(exercise.musicStyle);
+    playBackgroundMusic();
     setAnimationScale(1);
     let currentIndex = -1;
-    const pattern = exercise.pattern;
+    const pattern = customExercise.pattern;
 
     const runCycle = async () => {
       if (!isMountedRef.current) return;
@@ -187,22 +239,21 @@ export const AIHandsFreeBreathing: React.FC = () => {
       }
     };
     runCycle();
-  }, [playMusicForExercise, playAudio]);
+  }, [customExercise, playBackgroundMusic, playAudio]);
 
   useEffect(() => {
     if (exerciseState === 'exercise' && customExercise) {
-      startExercise(customExercise);
+      startExercise();
     }
   }, [exerciseState, customExercise, startExercise]);
 
   useEffect(() => {
     if (exerciseState === 'completion' && customExercise) {
-      if (musicRef.current) musicRef.current.pause();
-      setMusicPlaying(false);
+      stopBackgroundMusic();
       playAudio(customExercise.completionGuidance);
       saveStressEntry(customExercise);
     }
-  }, [exerciseState, customExercise, playAudio, saveStressEntry]);
+  }, [exerciseState, customExercise, playAudio, saveStressEntry, stopBackgroundMusic]);
 
   const handleMoodSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

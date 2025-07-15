@@ -7,7 +7,6 @@ export interface CustomExercise {
   introductoryGuidance: string;
   completionGuidance: string;
   stressScore: number;
-  musicStyle: 'Calm Piano' | 'Nature Sounds' | 'Ambient Pad' | 'Acoustic Guitar' | 'None';
   pattern: { phase: 'inhale' | 'exhale' | 'hold'; duration: number }[];
 }
 
