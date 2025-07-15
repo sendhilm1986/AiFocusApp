@@ -1,6 +1,15 @@
 // OpenAI Voice Service for Natural TTS and Text Generation via Supabase Edge Functions
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 
+export interface CustomExercise {
+  interpretedMood: string;
+  exerciseName: string;
+  introductoryGuidance: string;
+  completionGuidance: string;
+  stressScore: number;
+  pattern: { phase: 'inhale' | 'exhale' | 'hold'; duration: number }[];
+}
+
 class OpenAIVoiceService {
   private audioCache = new Map<string, string>();
   private supabaseFunctionsUrl: string;
@@ -180,14 +189,14 @@ class OpenAIVoiceService {
     }
   }
 
-  async analyzeMoodFromText(moodText: string): Promise<string> {
+  async generateCustomExercise(moodText: string, firstName: string): Promise<CustomExercise> {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) {
         throw new Error('Authentication error: Could not get user session.');
       }
 
-      const functionUrl = `${this.supabaseFunctionsUrl}/analyze-mood`;
+      const functionUrl = `${this.supabaseFunctionsUrl}/generate-custom-exercise`;
 
       const response = await fetch(functionUrl, {
         method: 'POST',
@@ -195,7 +204,7 @@ class OpenAIVoiceService {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ moodText }),
+        body: JSON.stringify({ moodText, firstName }),
       });
 
       if (!response.ok) {
@@ -203,13 +212,11 @@ class OpenAIVoiceService {
         throw new Error(errorData.error || `Server error: ${response.status} ${response.statusText}`);
       }
 
-      const { mood } = await response.json();
-      return mood;
+      return await response.json();
 
     } catch (error: any) {
-      console.error('=== CLIENT: Mood analysis failed, using fallback ===', error);
-      // Fallback to a default mood if the function fails
-      return 'Calm';
+      console.error('=== CLIENT: Custom exercise generation failed ===', error);
+      throw new Error(`Failed to generate custom exercise: ${error.message}`);
     }
   }
 
