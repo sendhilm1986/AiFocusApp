@@ -3,14 +3,11 @@
 import React from 'react';
 
 interface BreathingAnimationProps {
-  phase: 'inhale' | 'exhale' | 'hold' | '';
   duration: number;
+  scale: number;
 }
 
-export const BreathingAnimation: React.FC<BreathingAnimationProps> = ({ phase, duration }) => {
-  const scale = phase === 'inhale' ? 1.2 : 1;
-  const opacity = phase === 'hold' ? 0.8 : 1;
-
+export const BreathingAnimation: React.FC<BreathingAnimationProps> = ({ duration, scale }) => {
   return (
     <div className="relative w-64 h-64 flex items-center justify-center">
       {/* Outer glow */}
@@ -19,7 +16,6 @@ export const BreathingAnimation: React.FC<BreathingAnimationProps> = ({ phase, d
         style={{
           transform: `scale(${scale * 1.2})`,
           transitionDuration: `${duration}s`,
-          opacity: opacity,
         }}
       />
       {/* Main circle */}
@@ -28,16 +24,14 @@ export const BreathingAnimation: React.FC<BreathingAnimationProps> = ({ phase, d
         style={{
           transform: `scale(${scale})`,
           transitionDuration: `${duration}s`,
-          opacity: opacity,
         }}
       />
-      {/* Inner core */}
+      {/* Inner core - solid color */}
       <div
-        className="absolute w-1/2 h-1/2 rounded-full bg-gradient-to-br from-chart-1 to-chart-2 transition-all ease-in-out"
+        className="absolute w-1/2 h-1/2 rounded-full bg-chart-1 transition-all ease-in-out"
         style={{
           transform: `scale(${scale * 0.9})`,
           transitionDuration: `${duration}s`,
-          opacity: opacity,
         }}
       />
     </div>

@@ -47,9 +47,9 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const [exerciseState, setExerciseState] = useState<ExerciseState>('loading');
   const [firstName, setFirstName] = useState<string>('there');
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [breathingPhase, setBreathingPhase] = useState<'inhale' | 'exhale' | 'hold' | ''>('');
   const [phaseDuration, setPhaseDuration] = useState(0);
   const [instruction, setInstruction] = useState('');
+  const [animationScale, setAnimationScale] = useState(1);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const exerciseTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -117,7 +117,8 @@ export const AIHandsFreeBreathing: React.FC = () => {
     const exercise = moodExercises[mood];
     if (!exercise) return;
 
-    let currentIndex = -2; // Start at -2 to make the first index 0
+    setAnimationScale(1);
+    let currentIndex = -2;
     const pattern = exercise.pattern;
     const totalCycles = 5;
     let currentCycle = 0;
@@ -130,7 +131,10 @@ export const AIHandsFreeBreathing: React.FC = () => {
       if (currentIndex >= pattern.length) {
         currentCycle++;
         if (currentCycle >= totalCycles) {
-          if (isMountedRef.current) setExerciseState('completion');
+          if (isMountedRef.current) {
+            setAnimationScale(1);
+            setExerciseState('completion');
+          }
           return;
         }
         currentIndex = 0;
@@ -146,7 +150,12 @@ export const AIHandsFreeBreathing: React.FC = () => {
       }
 
       if (isMountedRef.current) {
-        setBreathingPhase(phase as any);
+        if (phase === 'inhale') {
+          setAnimationScale(1.2);
+        } else if (phase === 'exhale') {
+          setAnimationScale(1);
+        }
+
         setPhaseDuration(duration);
         setInstruction(phase.charAt(0).toUpperCase() + phase.slice(1));
         await playAudio(phase);
@@ -224,7 +233,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
         return (
           <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
             <div className="relative flex-grow flex items-center justify-center">
-              <BreathingAnimation phase={breathingPhase} duration={phaseDuration} />
+              <BreathingAnimation scale={animationScale} duration={phaseDuration} />
               <p
                 className="absolute text-4xl font-bold text-white tracking-widest uppercase"
                 style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
