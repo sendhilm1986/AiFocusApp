@@ -31,11 +31,10 @@ export const GuidedBreathingAnimation: React.FC<GuidedBreathingAnimationProps> =
         </div>
       </div>
 
-      {/* Central dark circle */}
-      <div className="relative w-[70%] h-[70%] bg-zinc-900 rounded-full flex items-center justify-center shadow-lg shadow-black/50">
+      {/* Central circle with light/dark mode support */}
+      <div className="relative w-[70%] h-[70%] bg-white dark:bg-zinc-900 rounded-full flex items-center justify-center shadow-lg dark:shadow-black/50">
         <p
-          className="text-3xl md:text-4xl font-bold text-white tracking-wider transition-opacity duration-500"
-          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+          className="font-heading text-3xl md:text-4xl font-bold text-zinc-900 dark:text-white tracking-wider transition-opacity duration-500"
         >
           {text}
         </p>

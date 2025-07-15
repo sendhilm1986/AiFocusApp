@@ -253,7 +253,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
                 text={instruction}
               />
             </div>
-            <p className="text-2xl text-muted-foreground pb-8">
+            <p className="text-2xl text-muted-foreground pb-8 font-heading">
               {moodExercises[selectedMood!]?.name}
             </p>
           </div>

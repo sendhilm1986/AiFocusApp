@@ -105,8 +105,8 @@ export default {
           to: { transform: 'rotate(360deg)' },
         },
         'wavy': {
-          '0%, 100%': { borderRadius: '42% 58% 70% 30% / 45% 45% 55% 55%' },
-          '50%': { borderRadius: '30% 70% 40% 60% / 60% 40% 50% 50%' },
+          '0%, 100%': { borderRadius: '60% 40% 70% 30% / 50% 60% 40% 50%' },
+          '50%': { borderRadius: '40% 60% 50% 50% / 60% 40% 60% 40%' },
         },
         'spin-slow': {
           from: { transform: 'rotate(0deg)' },
