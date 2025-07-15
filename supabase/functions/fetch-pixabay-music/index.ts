@@ -46,7 +46,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const musicApiUrl = `https://pixabay.com/api/music/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(category)}&safesearch=true&order=latest&per_page=50`;
+    const musicApiUrl = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&media_type=music&q=${encodeURIComponent(category)}&safesearch=true&order=latest&per_page=50`;
 
     const pixabayResponse = await fetch(musicApiUrl);
 

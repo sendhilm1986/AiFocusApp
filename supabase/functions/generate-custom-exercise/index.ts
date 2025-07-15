@@ -22,7 +22,7 @@ The user's first name is ${firstName}.
         3.  A brief, confident rationale explaining *why* this exercise is helpful for their specific state.
     *   **Completion Guidance:** Create a positive closing message for when the exercise is finished.
 4.  **Estimate Stress Score:** Based on the user's input, estimate a stress score from 1 (very low stress) to 5 (very high stress).
-5.  **Suggest Music Category:** Suggest a suitable music category from the following list for the exercise: background, nature, feelings, health. The category should match the mood and purpose of the exercise.
+5.  **Suggest Music Category:** Suggest a suitable music category from the following list for the exercise: meditation, healing, relaxing, nature, ambient, calm. The category should match the mood and purpose of the exercise.
 
 **Output Format:**
 
@@ -35,7 +35,7 @@ You MUST respond with a single, valid JSON object. Do not include any text outsi
   "introductoryGuidance": "The full text for the introductory voice line.",
   "completionGuidance": "The full text for the completion voice line.",
   "stressScore": 3,
-  "musicCategory": "feelings",
+  "musicCategory": "relaxing",
   "pattern": [
     { "phase": "inhale", "duration": 4 },
     { "phase": "hold", "duration": 2 },
