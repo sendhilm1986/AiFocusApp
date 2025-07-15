@@ -29,8 +29,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const pathname = usePathname();
 
-  // Don't show sidebar on login page or when not authenticated
-  const showSidebar = session && pathname !== '/login';
+  // Pages that should not have a sidebar
+  const noSidebarPages = ['/login', '/ai-hands-free-breathing'];
+  const showSidebar = session && !noSidebarPages.includes(pathname);
 
   if (!showSidebar) {
     return (

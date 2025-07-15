@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { HomeIcon, User, Smile, Brain, Settings, LogOut, Wind } from "lucide-react";
+import { HomeIcon, User, Smile, Brain, Settings, LogOut, Wind, Heart } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,11 @@ const navItems: NavItem[] = [
     title: "Breathing Exercise",
     href: "/breathing-exercise",
     icon: Wind,
+  },
+  {
+    title: "AI Hands-Free Breathing",
+    href: "/ai-hands-free-breathing",
+    icon: Heart,
   },
   {
     title: "AI Insights",

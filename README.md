@@ -10,10 +10,11 @@ The application provides a seamless journey for users to manage their well-being
 2.  **Dashboard:** After logging in, users land on the **Dashboard**, which serves as a central hub with quick links to all major features.
 3.  **Stress Tracking:** Users navigate to the **Stress Tracker** to log their current stress level (from 1 to 5) and add optional notes. This is the primary way users input data into the system.
 4.  **Guided Exercises:** If a user records a high stress level, they are prompted to begin an **AI-Guided Breathing Exercise**. These sessions are dynamically tailored to the user's reported stress, featuring a calming voice, personalized guidance, and configurable background music.
-5.  **Review & Reflect:** Users can review their past entries in the **History** tab or on the **Calendar View**, which provides a color-coded overview of their stress patterns over time.
-6.  **AI Insights:** On the **AI Insights** page, users can generate a detailed analysis of their stress data. The AI provides personalized recommendations, identifies patterns, and offers encouragement.
-7.  **Profile Management:** The **Profile Page** allows users to update their name (used for personalizing the AI's guidance) and change their password.
-8.  **Admin Panel:** A secure **Admin Dashboard** is available exclusively for the admin user (`clarityandpeace@pxdmail.com`) to monitor app usage, manage users, configure exercise music, and run system diagnostics.
+5.  **Hands-Free AI Breathing:** For a more immersive experience, users can access the **AI Hands-Free Breathing** page. This distraction-free interface guides them through exercises based on their selected mood, using voice commands and visual cues.
+6.  **Review & Reflect:** Users can review their past entries in the **History** tab or on the **Calendar View**, which provides a color-coded overview of their stress patterns over time.
+7.  **AI Insights:** On the **AI Insights** page, users can generate a detailed analysis of their stress data. The AI provides personalized recommendations, identifies patterns, and offers encouragement.
+8.  **Profile Management:** The **Profile Page** allows users to update their name (used for personalizing the AI's guidance) and change their password.
+9.  **Admin Panel:** A secure **Admin Dashboard** is available exclusively for the admin user (`clarityandpeace@pxdmail.com`) to monitor app usage, manage users, configure exercise music, and run system diagnostics.
 
 ## 📄 Pages & Components Breakdown
 
@@ -43,6 +44,10 @@ The application provides a seamless journey for users to manage their well-being
     *   Presents exercise options if no stress level is provided via the URL.
     *   Renders the `BreathingExerciseAssistant` component to run the guided session.
 
+*   **`src/app/ai-hands-free-breathing/page.tsx` (AI Hands-Free Breathing):**
+    *   A full-screen, distraction-free page for immersive, voice-guided breathing exercises.
+    *   Renders the `AIHandsFreeBreathing` component.
+
 *   **`src/app/profile/page.tsx` (Profile Page):**
     *   Allows users to update their first and last name.
     *   Provides a form to change their password.
@@ -55,6 +60,11 @@ The application provides a seamless journey for users to manage their well-being
     *   Uses `openaiVoiceService` to generate guidance text and convert it to speech.
     *   Manages audio playback for both voice and background music, including fade-in/fade-out effects.
     *   Allows users to configure voice and volume settings.
+
+*   **`src/components/ai-hands-free-breathing.tsx`:**
+    *   Manages the entire hands-free user flow, from mood selection to exercise completion.
+    *   Uses AI voice to guide the user without any need for manual interaction after the initial mood selection.
+    *   Features a synchronized breathing animation.
 
 *   **`src/components/stress-calendar.tsx`:**
     *   Visualizes stress entries on a monthly calendar.
