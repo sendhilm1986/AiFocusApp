@@ -321,7 +321,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
                 value={moodInputText}
                 onChange={(e) => setMoodInputText(e.target.value)}
                 placeholder="Describe how you're feeling..."
-                className="bg-transparent border-0 border-b-2 border-input rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 text-center text-4xl font-heading h-20 w-full placeholder:text-4xl placeholder:font-heading"
+                className="bg-transparent border-0 border-b-2 border-input rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 text-center text-4xl md:text-4xl font-heading h-20 w-full placeholder:text-4xl md:placeholder:text-4xl placeholder:font-heading"
                 autoFocus
               />
               <Button type="submit" size="lg">Continue</Button>
