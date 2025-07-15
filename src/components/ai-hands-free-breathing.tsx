@@ -114,15 +114,36 @@ export const AIHandsFreeBreathing: React.FC = () => {
     const exercise = moodExercises[mood];
     if (!exercise) return;
 
-    let currentIndex = -1;
+    let currentIndex = -2; // Start at -2 to make the first index 0
     const pattern = exercise.pattern;
     const totalCycles = 5;
     let currentCycle = 0;
 
     const runCycle = async () => {
-      currentIndex = (currentIndex + 1) % pattern.length;
-      const phase = pattern[currentIndex] as string;
-      const duration = pattern[currentIndex + 1] as number;
+      if (!isMountedRef.current) return;
+
+      // Move to the next phase/duration pair
+      currentIndex += 2;
+
+      // Check if we've completed a full pattern loop
+      if (currentIndex >= pattern.length) {
+        currentCycle++;
+        if (currentCycle >= totalCycles) {
+          if (isMountedRef.current) setExerciseState('completion');
+          return;
+        }
+        currentIndex = 0; // Reset to the start of the pattern for the next cycle
+      }
+
+      const phase = pattern[currentIndex];
+      const duration = pattern[currentIndex + 1];
+
+      // Type check to ensure pattern is not malformed and prevent runtime errors
+      if (typeof phase !== 'string' || typeof duration !== 'number') {
+        console.error('Malformed breathing pattern detected. Stopping exercise.');
+        if (isMountedRef.current) setExerciseState('completion');
+        return;
+      }
 
       if (isMountedRef.current) {
         setBreathingPhase(phase);
@@ -130,16 +151,12 @@ export const AIHandsFreeBreathing: React.FC = () => {
         setInstruction(phase.charAt(0).toUpperCase() + phase.slice(1));
         await playAudio(phase);
 
-        exerciseTimerRef.current = setTimeout(() => {
-          if (currentIndex >= pattern.length - 2) {
-            currentCycle++;
-            if (currentCycle >= totalCycles) {
-              if (isMountedRef.current) setExerciseState('completion');
-              return;
-            }
-          }
-          if (isMountedRef.current) runCycle();
-        }, duration * 1000);
+        // Only set the timeout if the component is still mounted after the audio plays
+        if (isMountedRef.current) {
+            exerciseTimerRef.current = setTimeout(() => {
+                if (isMountedRef.current) runCycle();
+            }, duration * 1000);
+        }
       }
     };
     runCycle();
