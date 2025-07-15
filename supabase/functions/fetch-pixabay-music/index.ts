@@ -66,7 +66,7 @@ serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error('Error in fetch-pixabay-music function:', error);
-    return new Response(JSON.stringify({ error: message }), {
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
