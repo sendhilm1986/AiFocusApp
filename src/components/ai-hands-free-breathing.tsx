@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService } from '@/lib/openai-voice-service';
-import { X, Frown, Meh, Angry, Smile, Annoyed, Sparkles } from 'lucide-react';
+import { X, Frown, Meh, Angry, Smile, Annoyed, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { BouncingBallsLoader } from './bouncing-balls-loader';
@@ -15,13 +15,13 @@ import { BreathingAnimation } from './breathing-animation';
 type ExerciseState = 'loading' | 'welcome' | 'mood-selection' | 'exercise' | 'completion';
 
 const moods = [
-  { name: 'Anxious', icon: Frown, color: 'text-orange-500', bgColor: 'hover:bg-orange-50' },
-  { name: 'Stressed', icon: Annoyed, color: 'text-red-500', bgColor: 'hover:bg-red-50' },
-  { name: 'Tired', icon: Meh, color: 'text-gray-500', bgColor: 'hover:bg-gray-50' },
-  { name: 'Sad', icon: Frown, color: 'text-blue-500', bgColor: 'hover:bg-blue-50' },
-  { name: 'Angry', icon: Angry, color: 'text-red-600', bgColor: 'hover:bg-red-50' },
-  { name: 'Calm', icon: Smile, color: 'text-green-500', bgColor: 'hover:bg-green-50' },
-  { name: 'Energized', icon: Sparkles, color: 'text-yellow-500', bgColor: 'hover:bg-yellow-50' },
+  { name: 'Anxious', icon: Frown, color: 'text-orange-500', hoverBgColor: 'hover:bg-orange-50', selectedBgColor: 'bg-orange-50', selectedBorderColor: 'border-orange-500' },
+  { name: 'Stressed', icon: Annoyed, color: 'text-red-500', hoverBgColor: 'hover:bg-red-50', selectedBgColor: 'bg-red-50', selectedBorderColor: 'border-red-500' },
+  { name: 'Tired', icon: Meh, color: 'text-gray-500', hoverBgColor: 'hover:bg-gray-50', selectedBgColor: 'bg-gray-50', selectedBorderColor: 'border-gray-500' },
+  { name: 'Sad', icon: Frown, color: 'text-blue-500', hoverBgColor: 'hover:bg-blue-50', selectedBgColor: 'bg-blue-50', selectedBorderColor: 'border-blue-500' },
+  { name: 'Angry', icon: Angry, color: 'text-red-600', hoverBgColor: 'hover:bg-red-50', selectedBgColor: 'bg-red-50', selectedBorderColor: 'border-red-600' },
+  { name: 'Calm', icon: Smile, color: 'text-green-500', hoverBgColor: 'hover:bg-green-50', selectedBgColor: 'bg-green-50', selectedBorderColor: 'border-green-500' },
+  { name: 'Energized', icon: Sparkles, color: 'text-yellow-500', hoverBgColor: 'hover:bg-yellow-50', selectedBgColor: 'bg-yellow-50', selectedBorderColor: 'border-yellow-500' },
 ];
 
 interface BreathingExercise {
@@ -47,6 +47,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const [exerciseState, setExerciseState] = useState<ExerciseState>('loading');
   const [firstName, setFirstName] = useState<string>('there');
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [processingMood, setProcessingMood] = useState<string | null>(null);
   const [phaseDuration, setPhaseDuration] = useState(0);
   const [instruction, setInstruction] = useState('');
   const [animationScale, setAnimationScale] = useState(1);
@@ -183,11 +184,13 @@ export const AIHandsFreeBreathing: React.FC = () => {
   }, [exerciseState, firstName, playAudio]);
 
   const handleMoodSelect = async (mood: string) => {
+    setProcessingMood(mood);
     setSelectedMood(mood);
     const exercise = moodExercises[mood];
     await playAudio(`I understand you're feeling ${mood.toLowerCase()}, ${firstName}. To help ${exercise.reassurance}, we will practice ${exercise.name}. ${exercise.intro}`);
     if (isMountedRef.current) {
       setExerciseState('exercise');
+      setProcessingMood(null);
     }
   };
 
@@ -214,15 +217,25 @@ export const AIHandsFreeBreathing: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {moods.map(mood => {
                 const Icon = mood.icon;
+                const isProcessingThis = processingMood === mood.name;
                 return (
                   <Button
                     key={mood.name}
                     variant="outline"
-                    className={cn("h-24 text-lg flex flex-col gap-2 transition-colors", mood.bgColor)}
+                    className={cn(
+                      "h-24 text-lg flex flex-col gap-2 transition-colors",
+                      !processingMood && mood.hoverBgColor,
+                      isProcessingThis && `${mood.selectedBgColor} border-2 ${mood.selectedBorderColor}`
+                    )}
                     onClick={() => handleMoodSelect(mood.name)}
+                    disabled={processingMood !== null}
                   >
-                    <Icon className={cn("h-10 w-10", mood.color)} strokeWidth={1.5} />
-                    {mood.name}
+                    {isProcessingThis ? (
+                      <Loader2 className={cn("h-10 w-10 animate-spin", mood.color)} />
+                    ) : (
+                      <Icon className={cn("h-10 w-10", mood.color)} strokeWidth={1.5} />
+                    )}
+                    {isProcessingThis ? 'Preparing...' : mood.name}
                   </Button>
                 );
               })}
