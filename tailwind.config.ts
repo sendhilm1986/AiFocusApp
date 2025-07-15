@@ -99,12 +99,17 @@ export default {
             transform: 'translateY(0)',
             animationTimingFunction: 'cubic-bezier(0,0,0.2,1)',
           },
+        },
+        'spin-very-slow': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
         }
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'bounce': 'bounce 1s infinite',
+        'spin-very-slow': 'spin-very-slow 25s linear infinite',
   		}
   	}
   },
