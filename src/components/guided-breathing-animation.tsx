@@ -24,29 +24,39 @@ export const GuidedBreathingAnimation: React.FC<GuidedBreathingAnimationProps> =
   text,
 }) => {
   return (
-    <div className="relative w-52 h-52 md:w-64 md:h-64 flex items-center justify-center filter contrast-20">
-      {/* The container for the metaballs */}
-      <div
-        className="absolute w-full h-full filter blur-md animate-spin-very-slow"
-        style={{
-          transform: `scale(${scale})`,
-          transition: `transform ${duration}s ease-in-out`,
-        }}
-      >
-        {circles.map((circle, index) => (
-          <div
-            key={index}
-            className={cn(
-              "absolute w-1/2 h-1/2 rounded-full mix-blend-screen opacity-75",
-              circle.color
-            )}
-            style={{
-              transform: circle.transform,
-            }}
-          />
-        ))}
+    <div className="relative w-52 h-52 md:w-64 md:h-64 flex items-center justify-center">
+      {/* This container creates the "metaball" effect.
+          - `bg-background` is crucial for the contrast filter to work against.
+          - `filter contrast-[30]` sharpens the blurred edges of the child elements.
+      */}
+      <div className="absolute inset-0 filter contrast-[30] bg-background">
+        {/* This container holds the circles, spins, and applies the blur.
+            - `filter blur-[15px]` makes the circles' edges fuzzy so they can blend.
+            - `animate-spin-very-slow` gives the gentle rotation.
+        */}
+        <div
+          className="absolute inset-0 filter blur-[15px] animate-spin-very-slow"
+          style={{
+            transform: `scale(${scale})`,
+            transition: `transform ${duration}s ease-in-out`,
+          }}
+        >
+          {circles.map((circle, index) => (
+            <div
+              key={index}
+              className={cn(
+                "absolute w-1/2 h-1/2 rounded-full mix-blend-screen",
+                circle.color
+              )}
+              style={{
+                transform: circle.transform,
+              }}
+            />
+          ))}
+        </div>
       </div>
-      {/* The text overlay */}
+      
+      {/* The text overlay is a sibling to the effect container, so it's not affected by the filters. */}
       <div className="absolute inset-0 flex items-center justify-center">
         <p
           className="text-3xl md:text-4xl font-bold text-white tracking-widest uppercase transition-opacity duration-500"
