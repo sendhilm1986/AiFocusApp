@@ -41,6 +41,16 @@ const moodExercises: Record<string, BreathingExercise> = {
   Energized: { name: 'Power Breath', pattern: ['inhale', 6, 'hold', 2, 'exhale', 4], intro: "This technique can help you focus your energy. Let's begin.", reassurance: 'channel your positive energy' },
 };
 
+const moodToStressScore: Record<string, number> = {
+  Anxious: 4,
+  Stressed: 4,
+  Tired: 3,
+  Sad: 3,
+  Angry: 5,
+  Calm: 2,
+  Energized: 1,
+};
+
 export const AIHandsFreeBreathing: React.FC = () => {
   const { session } = useSession();
   const router = useRouter();
@@ -73,6 +83,31 @@ export const AIHandsFreeBreathing: React.FC = () => {
       console.error("Failed to play audio:", error);
     }
   }, []);
+
+  const saveStressEntryFromMood = useCallback(async (mood: string) => {
+    if (!session?.user || !mood) return;
+
+    const stressScore = moodToStressScore[mood];
+    if (!stressScore) {
+      console.warn(`No stress score mapping for mood: ${mood}`);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('stress_entries')
+        .insert({
+          user_id: session.user.id,
+          stress_score: stressScore,
+          notes: `Completed a hands-free breathing session for feeling ${mood.toLowerCase()}.`,
+        });
+
+      if (error) throw error;
+      console.log('Stress entry from hands-free session saved.');
+    } catch (error: any) {
+      console.error('Failed to save stress entry from hands-free session:', error);
+    }
+  }, [session]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -181,8 +216,11 @@ export const AIHandsFreeBreathing: React.FC = () => {
   useEffect(() => {
     if (exerciseState === 'completion') {
       playAudio(`Well done, ${firstName}. Whenever you're ready, you may repeat this session or close the screen.`);
+      if (selectedMood) {
+        saveStressEntryFromMood(selectedMood);
+      }
     }
-  }, [exerciseState, firstName, playAudio]);
+  }, [exerciseState, firstName, playAudio, selectedMood, saveStressEntryFromMood]);
 
   const handleMoodSelect = async (mood: string) => {
     setProcessingMood(mood);
