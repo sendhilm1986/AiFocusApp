@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/session-context-provider';
 import { openaiVoiceService, CustomExercise } from '@/lib/openai-voice-service';
-import { X, Music, Volume2, VolumeX } from 'lucide-react';
+import { X, Music, VolumeX } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { BouncingBallsLoader } from './bouncing-balls-loader';
 import { GuidedBreathingAnimation } from './guided-breathing-animation';
@@ -32,25 +32,22 @@ export const AIHandsFreeBreathing: React.FC = () => {
   const [animationScale, setAnimationScale] = useState(1);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [availableMusic, setAvailableMusic] = useState<BackgroundMusic[]>([]);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMusicMuted, setIsMusicMuted] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const exerciseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
 
-  const toggleMute = () => {
-    setIsMuted(prev => !prev);
+  const toggleMusicMute = () => {
+    setIsMusicMuted(prev => !prev);
   };
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.muted = isMuted;
-    }
     if (musicRef.current) {
-      musicRef.current.muted = isMuted;
+      musicRef.current.muted = isMusicMuted;
     }
-  }, [isMuted]);
+  }, [isMusicMuted]);
 
   const fadeAudio = useCallback((audioElement: HTMLAudioElement, targetVolume: number, duration: number, onComplete?: () => void) => {
     const startVolume = audioElement.volume;
@@ -153,9 +150,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
   useEffect(() => {
     isMountedRef.current = true;
     audioRef.current = new Audio();
-    audioRef.current.muted = isMuted;
     musicRef.current = new Audio();
-    musicRef.current.muted = isMuted;
 
     const fetchInitialData = async () => {
       if (session?.user) {
@@ -198,7 +193,7 @@ export const AIHandsFreeBreathing: React.FC = () => {
         musicRef.current = null;
       }
     };
-  }, [session, isMuted]);
+  }, [session]);
 
   useEffect(() => {
     if (exerciseState === 'welcome' && firstName) {
@@ -376,8 +371,8 @@ export const AIHandsFreeBreathing: React.FC = () => {
   return (
     <div className="fixed inset-0 bg-background flex items-center justify-center p-4">
       <div className="absolute top-6 right-6 z-50 flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={toggleMute}>
-          {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+        <Button variant="ghost" size="icon" onClick={toggleMusicMute}>
+          {isMusicMuted ? <VolumeX className="h-6 w-6" /> : <Music className="h-6 w-6" />}
         </Button>
         <ThemeToggle />
         <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
