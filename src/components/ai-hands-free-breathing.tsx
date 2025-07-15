@@ -345,6 +345,11 @@ export const AIHandsFreeBreathing: React.FC = () => {
               <p className="text-2xl text-muted-foreground font-heading">
                 {customExercise?.exerciseName}
               </p>
+              {customExercise?.pattern && (
+                <p className="text-sm text-muted-foreground">
+                  Your pattern: {customExercise.pattern.map(p => `${p.phase.charAt(0).toUpperCase() + p.phase.slice(1)} (${p.duration}s)`).join(' → ')}
+                </p>
+              )}
               {musicPlaying && (
                 <Badge variant="outline" className="bg-green-50 text-green-700">
                   <Music className="h-3 w-3 mr-1" />
