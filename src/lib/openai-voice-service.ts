@@ -7,16 +7,8 @@ export interface CustomExercise {
   introductoryGuidance: string;
   completionGuidance: string;
   stressScore: number;
-  musicCategory: string;
+  musicStyle: 'Calm Piano' | 'Nature Sounds' | 'Ambient Pad' | 'Acoustic Guitar' | 'None';
   pattern: { phase: 'inhale' | 'exhale' | 'hold'; duration: number }[];
-}
-
-interface MusicTrack {
-  id: number;
-  name: string;
-  duration: number;
-  url: string;
-  audio: string;
 }
 
 class OpenAIVoiceService {
@@ -226,37 +218,6 @@ class OpenAIVoiceService {
     } catch (error: any) {
       console.error('=== CLIENT: Custom exercise generation failed ===', error);
       throw new Error(`Failed to generate custom exercise: ${error.message}`);
-    }
-  }
-
-  async fetchMusic(category: string): Promise<MusicTrack[]> {
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        throw new Error('Authentication error: Could not get user session.');
-      }
-
-      const functionUrl = `${this.supabaseFunctionsUrl}/fetch-pixabay-music`;
-
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ category }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response from server.' }));
-        throw new Error(errorData.error || `Server error: ${response.status} ${response.statusText}`);
-      }
-
-      return await response.json();
-
-    } catch (error: any) {
-      console.error('=== CLIENT: Fetching music failed ===', error);
-      throw new Error(`Failed to fetch music: ${error.message}`);
     }
   }
 
